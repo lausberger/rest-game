@@ -14,6 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.util.HashMap;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -36,7 +40,6 @@ public class GameRepositoryTests {
     @Before
     public void setup() throws Exception {
         dynamoDBMapper = new DynamoDBMapper(amazonDynamoDB);
-
         CreateTableRequest tableRequest = dynamoDBMapper
             .generateCreateTableRequest(Game.class);
         tableRequest.setProvisionedThroughput(
@@ -44,6 +47,8 @@ public class GameRepositoryTests {
         );
         amazonDynamoDB.createTable(tableRequest);
     }
+
+    // TODO clear table after each test if conflicts arise
 
     @After
     public void teardown() throws Exception {
@@ -100,5 +105,43 @@ public class GameRepositoryTests {
         gameRepository.deleteGameByID(game.getGameID());
         Game loadedGame = gameRepository.getGameByID(game.getGameID());
         assertNull(loadedGame);
+    }
+
+    @Test
+    /*
+    Given I have added several Games to the table
+    When I scan the table contents
+    Then I should see all the Games
+     */
+    public void getAllGamesInTable() throws AssertionError {
+        HashMap<String, Boolean> gameIDMap = new HashMap<String, Boolean>();
+        for (int i=0; i<5; i++) {
+            Game game = gameRepository.saveGame(new Game());
+            gameIDMap.put(game.getGameID(), true);
+        }
+        List<Game> gamesList = gameRepository.getAllGames();
+        for (Game game : gamesList) {
+            assertTrue(gameIDMap.containsKey(game.getGameID()));
+        }
+    }
+
+    @Test
+    /*
+    Given I have saved several active and inactive Games
+    When I scan the table contents for active Games
+    Then I should only see Games where active is true
+     */
+    public void getAllActiveGamesInTable() throws AssertionError {
+        for (int i=0; i<6; i++) {
+            Game game = new Game();
+            if (i % 2 == 0) {
+                game.setActive(false);
+            }
+            gameRepository.saveGame(game);
+        }
+        List<Game> activeGames = gameRepository.getActiveGames();
+        for (Game game : activeGames) {
+            assertTrue(game.isActive());
+        }
     }
 }

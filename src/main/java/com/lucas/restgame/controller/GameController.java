@@ -5,16 +5,22 @@ import com.lucas.restgame.repository.GameRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 public class GameController {
 
     @Autowired
     private GameRepository gameRepository;
 
-    // TODO view all active games
-//    @GetMapping("/games")
-//    public Game[] getAllGames() {
-//    }
+    @GetMapping("/games")
+    public List<Game> getAllGames(@RequestParam(value = "active", defaultValue = "false") boolean active) {
+        if (active) {
+            return gameRepository.getActiveGames();
+        } else {
+            return gameRepository.getAllGames();
+        }
+    }
 
     @GetMapping("/games/{id}")
     public Game getGameByID(@PathVariable("id") String gameID) {
