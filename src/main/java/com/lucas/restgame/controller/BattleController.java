@@ -51,22 +51,22 @@ public class BattleController {
         }
     }
 
-    @GetMapping("/battle-instances/{id}")
+    @GetMapping("/battles/{id}")
     public Battle getBattleByID(@PathVariable("id") String battleID) {
         return battleRepository.getBattleByID(battleID);
     }
 
-    @PostMapping("/battle-instances")
+    @PostMapping("/battles")
     public Battle newBattle(@RequestBody Battle battle) {
         return battleRepository.saveBattle(battle);
     }
 
-    @DeleteMapping("/battle-instances/{id}")
+    @DeleteMapping("/battles/{id}")
     public Boolean deleteBattleByID(@PathVariable("id") String battleID) {
         return battleRepository.deleteBattleByID(battleID);
     }
 
-    @PutMapping("/battle-instances/{id}")
+    @PutMapping("/battles/{id}")
     public String updateBattle(
             @PathVariable("id") String battleID,
             @RequestBody Battle battle) {
