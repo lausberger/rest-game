@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @RunWith(SpringJUnit4ClassRunner.class)
 @TestPropertySource(properties = {
-        "amazon.dynamodb.endpoint=http://localhost:8080/",
+        "amazon.dynamodb.endpoint=http://localhost:8000/",
         "amazon.aws.accesskey=key",
         "amazon.aws.secretkey=secretkey"
 })

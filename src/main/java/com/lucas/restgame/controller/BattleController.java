@@ -4,10 +4,12 @@ import com.lucas.restgame.entity.Battle;
 import com.lucas.restgame.model.BattleAction;
 import com.lucas.restgame.model.BattleManager;
 import com.lucas.restgame.repository.BattleRepository;
+import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -17,13 +19,13 @@ public class BattleController {
     @Autowired
     private BattleRepository battleRepository;
 
-    private BattleManager battleManager;
+    private final BattleManager battleManager = new BattleManager();
 
 
     // TODO this makes more sense as a PUT!
     @PostMapping("/battles/{id}")
     public Battle performBattleAction(
-            @PathVariable("id") String battleID, @RequestBody BattleAction action) {
+            @PathVariable("id") String battleID, @RequestBody JSONObject body) throws JSONException {
         Battle battle = battleRepository.getBattleByID(battleID);
         if (battle == null) {
             throw new ResponseStatusException(
@@ -34,6 +36,7 @@ public class BattleController {
                     )
             );
         }
+        BattleAction action = BattleAction.valueOf(body.get("action").toString());
         Battle updatedBattle = battleManager.simulateBattle(battle, action);
         // should updateBattle return a Battle?
         battleRepository.updateBattle(battleID, updatedBattle);
