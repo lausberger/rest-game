@@ -17,7 +17,7 @@ import static org.mockito.Mockito.*;
 
 public class BattleManagerTests {
 
-    private final BattleManager battleManager = new BattleManager();
+    private BattleManager battleManager = new BattleManager();
 
     private Battle battle;
 
@@ -28,19 +28,27 @@ public class BattleManagerTests {
         battle = new Battle(player, enemy);
     }
 
+    /*
+     Stub the first Enemy to always perform a given BattleAction.
+     TODO: support for specifying which enemy/enemies to stub
+     */
+    public void forceBattleAction(Battle battle, BattleAction action) {
+        Enemy enemy = spy(battle.getEnemies().get(0));
+        when(enemy.getAction()).thenReturn(action);
+        List<Enemy> enemies = new ArrayList<>();
+        enemies.add(enemy);
+        battle.setEnemies(enemies);
+    }
+
     @Test
     /*
     Given player uses ATTACK
     When enemy uses ATTACK
     Then both should lose health
      */
-    public void playerAttacksEnemyAttacks() throws Exception {
+    public void playerAttacksEnemyAttacks() {
         // stub getAction() to ATTACK
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(BattleAction.ATTACK);
-        List<Enemy> enemies = new ArrayList<>();
-        enemies.add(enemy);
-        battle.setEnemies(enemies);
+        forceBattleAction(battle, BattleAction.ATTACK);
 
         // starting health
         int enemyHealthBefore = battle.getEnemies().get(0).getHealth();
@@ -62,13 +70,10 @@ public class BattleManagerTests {
      */
     public void playerDefendsEnemyAttacks() {
         // stub getAction() to ATTACK
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(BattleAction.ATTACK);
-        List<Enemy> enemies = new ArrayList<>();
-        enemies.add(enemy);
-        battle.setEnemies(enemies);
+        forceBattleAction(battle, BattleAction.ATTACK);
 
         // full damage amount subtracted from player health
+        Enemy enemy = battle.getEnemies().get(0);
         int undefendedHealth = battle.getPlayer().getHealth()
                 - (enemy.getPower() - battle.getPlayer().getDefense());
         // get actual health after defending
@@ -86,13 +91,10 @@ public class BattleManagerTests {
      */
     public void playerAttacksEnemyDefends() {
         // stub getAction() to DEFEND
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(BattleAction.DEFEND);
-        List<Enemy> enemies = new ArrayList<>();
-        enemies.add(enemy);
-        battle.setEnemies(enemies);
+        forceBattleAction(battle, BattleAction.DEFEND);
 
         // full damage amount subtracted from enemy health
+        Enemy enemy = battle.getEnemies().get(0);
         int undefendedHealth = enemy.getHealth()
                 - (battle.getPlayer().getPower() - enemy.getDefense());
 
@@ -111,11 +113,7 @@ public class BattleManagerTests {
      */
     public void priorityWhenPlayerDodgesEnemyDefends() {
         // stub getAction() to DEFEND
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(BattleAction.DEFEND);
-        List<Enemy> enemies = new ArrayList<>();
-        enemies.add(enemy);
-        battle.setEnemies(enemies);
+        forceBattleAction(battle, BattleAction.DEFEND);
 
         battleManager.simulateBattle(battle, BattleAction.DODGE);
 
@@ -129,11 +127,8 @@ public class BattleManagerTests {
     Then player should have priority
      */
     public void priorityWhenPlayerDefendsEnemyDodges() {
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(BattleAction.DODGE);
-        List<Enemy> enemies = new ArrayList<>();
-        enemies.add(enemy);
-        battle.setEnemies(enemies);
+        // stub getAction() to DODGE
+        forceBattleAction(battle, BattleAction.DODGE);
 
         battleManager.simulateBattle(battle, BattleAction.DEFEND);
 
@@ -148,12 +143,10 @@ public class BattleManagerTests {
     And priority should be unchanged
      */
     public void playerDodgesEnemyDodges() {
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(BattleAction.DODGE);
-        List<Enemy> enemies = new ArrayList<>();
-        enemies.add(enemy);
-        battle.setEnemies(enemies);
+        // stub getAction() to DODGE
+        forceBattleAction(battle, BattleAction.DODGE);
 
+        Enemy enemy = battle.getEnemies().get(0);
         int startPlayerHealth = battle.getPlayer().getHealth();
         int startEnemyHealth = enemy.getHealth();
         battleManager.simulateBattle(battle, BattleAction.DODGE);
@@ -173,13 +166,10 @@ public class BattleManagerTests {
     And status should be VICTORY
      */
     public void playerVictory() {
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(BattleAction.ATTACK);
-        List<Enemy> enemies = new ArrayList<>();
-        enemies.add(enemy);
-        battle.setEnemies(enemies);
+        // stub getAction() to ATTACK
+        forceBattleAction(battle, BattleAction.ATTACK);
 
-        enemy.setHealth(1);
+        battle.getEnemies().get(0).setHealth(1);
         battleManager.simulateBattle(battle, BattleAction.ATTACK);
 
         assertTrue(battle.getEnemies().isEmpty());
@@ -194,11 +184,8 @@ public class BattleManagerTests {
     And status should be DEFEAT
      */
     public void playerDefeat() {
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(BattleAction.ATTACK);
-        List<Enemy> enemies = new ArrayList<>();
-        enemies.add(enemy);
-        battle.setEnemies(enemies);
+        // stub getAction() to ATTACK
+        forceBattleAction(battle, BattleAction.ATTACK);
 
         battle.getPlayer().setHealth(1);
         battleManager.simulateBattle(battle, BattleAction.ATTACK);
@@ -215,12 +202,10 @@ public class BattleManagerTests {
     Then player should not attack after
      */
     public void noPlayerAttackWhenPlayerDiesFirst() {
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(BattleAction.ATTACK);
-        List<Enemy> enemies = new ArrayList<>();
-        enemies.add(enemy);
-        battle.setEnemies(enemies);
+        // stub getAction() to ATTACK
+        forceBattleAction(battle, BattleAction.ATTACK);
 
+        Enemy enemy = battle.getEnemies().get(0);
         int enemyInitialHealth = enemy.getHealth();
         battle.setPriority(1);
         battle.getPlayer().setHealth(1);
@@ -237,15 +222,12 @@ public class BattleManagerTests {
     Then enemy should not attack after
      */
     public void noEnemyAttackWhenEnemyDiesFirst() {
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(BattleAction.ATTACK);
-        List<Enemy> enemies = new ArrayList<>();
-        enemies.add(enemy);
-        battle.setEnemies(enemies);
+        // stub getAction() to ATTACK
+        forceBattleAction(battle, BattleAction.ATTACK);
 
         int playerInitialHealth = battle.getPlayer().getHealth();
         battle.setPriority(0);
-        enemy.setHealth(1);
+        battle.getEnemies().get(0).setHealth(1);
         battleManager.simulateBattle(battle, BattleAction.ATTACK);
 
         assertSame(battle.getPlayer().getHealth(), playerInitialHealth);
