@@ -18,18 +18,21 @@ public class BattleManager {
         boolean enemyDodged = false;
         int enemyHit = 0;
         int playerHit = 0;
+
         Player player = battle.getPlayer();
         List<Enemy> enemies = battle.getEnemies();
         // TODO: support for targeting specific enemy
         Enemy enemy = enemies.get(0);
         BattleAction enemyAction = enemy.getAction();
 
-        // simulate dodges
-        if (enemyAction == BattleAction.DODGE) {
-            enemyDodged = attemptDodge();
+        // placeholder dodge probabilities
+        if (enemyAction == BattleAction.DODGE
+                && playerAction == BattleAction.ATTACK) {
+            enemyDodged = coinFlip(0.5f);
         }
-        if (playerAction == BattleAction.DODGE) {
-            playerDodged = attemptDodge();
+        if (playerAction == BattleAction.DODGE
+                && enemyAction == BattleAction.ATTACK) {
+            playerDodged = coinFlip(0.5f);
         }
 
         // calculate base attack damage
@@ -40,7 +43,7 @@ public class BattleManager {
             playerHit = player.getPower() - enemy.getDefense();
         }
 
-        // factor in defends and dodges
+        // factor in defends and dodges and priority
         if (enemyAction == BattleAction.DEFEND) {
             if (playerAction == BattleAction.ATTACK) {
                 playerHit = Math.round(playerHit * 0.5f);
@@ -50,6 +53,7 @@ public class BattleManager {
             }
         } else if (enemyDodged) {
             playerHit = 0;
+            battle.setPriority(1);
         }
         if (playerAction == BattleAction.DEFEND) {
             if (enemyAction == BattleAction.ATTACK) {
@@ -60,6 +64,7 @@ public class BattleManager {
             }
         } else if (playerDodged) {
             enemyHit = 0;
+            battle.setPriority(0);
         }
 
         // determine turn order
@@ -71,7 +76,8 @@ public class BattleManager {
             playerMovesFirst = battle.getPriority() == 0;
         }
 
-        // apply damage
+        // apply damage, set status, update splash text
+        // TODO apply spell effects
         // player attacks first
         if (playerMovesFirst) {
             battle.addText(
@@ -93,11 +99,20 @@ public class BattleManager {
                         )
                 );
             } else {
-                // enemy dodges
+                // enemy dodges successfully
                 if (enemyDodged) {
                     battle.addText(
                             String.format(
                                     "%s dodges %s's attack!",
+                                    enemy.getName(),
+                                    player.getName()
+                            )
+                    );
+                }  else if (enemyAction == BattleAction.DODGE) {
+                    // enemy fails to dodge
+                    battle.addText(
+                            String.format(
+                                    "%s fails to dodge %s's attack.",
                                     enemy.getName(),
                                     player.getName()
                             )
@@ -149,11 +164,20 @@ public class BattleManager {
                         battle.setStatus(BattleStatus.DEFEAT);
                     }
                 } else { // enemy deals no damage
-                    // player dodges
+                    // player dodges successfully
                     if (playerDodged) {
                         battle.addText(
                                 String.format(
                                         "%s dodges %s's attack!",
+                                        player.getName(),
+                                        enemy.getName()
+                                )
+                        );
+                    } else if (playerAction == BattleAction.DODGE) {
+                        // player fails to dodge
+                        battle.addText(
+                                String.format(
+                                        "%s fails to dodge %s's attack.",
                                         player.getName(),
                                         enemy.getName()
                                 )
@@ -180,52 +204,6 @@ public class BattleManager {
                                 enemyHit
                         )
                 );
-                // player dies
-                if (player.getHealth() == 0) {
-                    battle.addText(
-                            String.format(
-                                    "%s has killed %s.",
-                                    player.getName(),
-                                    enemy.getName()
-                            )
-                    );
-                    battle.setStatus(BattleStatus.DEFEAT);
-                } else { // player survives
-                    battle.addText(
-                            String.format(
-                                    "%s uses %s!",
-                                    player.getName(),
-                                    playerAction.toString()
-                            )
-                    );
-                    // player deals damage
-                    if (playerHit > 0) {
-                        enemy.setHealth(Math.max(0, enemy.getHealth() - playerHit));
-                        battle.addText(
-                                String.format(
-                                        "%s hits %s for %s damage.",
-                                        player.getName(),
-                                        enemy.getName(),
-                                        playerHit
-                                )
-                        );
-                        // enemy dies
-                        if (enemy.getHealth() == 0) {
-                            // TODO add status to prevent targeting or attacking
-                            battle.addText(
-                                    String.format(
-                                            "%s has killed %s.",
-                                            player.getName(),
-                                            enemy.getName()
-                                    )
-                            );
-                            enemies.remove(enemy);
-                            if (enemies.isEmpty()) {
-                                battle.setStatus(BattleStatus.VICTORY);
-                            }
-                        }
-                    }
-                }
             } else { // enemy deals no damage
                 // player dodges
                 if (playerDodged) {
@@ -236,14 +214,68 @@ public class BattleManager {
                                     enemy.getName()
                             )
                     );
+                } else if (playerAction == BattleAction.DODGE) {
+                    // player fails to dodge
+                    battle.addText(
+                            String.format(
+                                    "%s fails to dodge %s's attack.",
+                                    player.getName(),
+                                    enemy.getName()
+                            )
+                    );
+                }
+            }
+            // player dies
+            if (player.getHealth() == 0) {
+                battle.addText(
+                        String.format(
+                                "%s has killed %s.",
+                                player.getName(),
+                                enemy.getName()
+                        )
+                );
+                battle.setStatus(BattleStatus.DEFEAT);
+            } else { // player survives
+                battle.addText(
+                        String.format(
+                                "%s uses %s!",
+                                player.getName(),
+                                playerAction.toString()
+                        )
+                );
+                // player deals damage
+                if (playerHit > 0) {
+                    enemy.setHealth(Math.max(0, enemy.getHealth() - playerHit));
+                    battle.addText(
+                            String.format(
+                                    "%s hits %s for %s damage.",
+                                    player.getName(),
+                                    enemy.getName(),
+                                    playerHit
+                            )
+                    );
+                    // enemy dies
+                    if (enemy.getHealth() == 0) {
+                        // TODO add status to prevent targeting or attacking
+                        battle.addText(
+                                String.format(
+                                        "%s has killed %s.",
+                                        player.getName(),
+                                        enemy.getName()
+                                )
+                        );
+                        enemies.remove(enemy);
+                        if (enemies.isEmpty()) {
+                            battle.setStatus(BattleStatus.VICTORY);
+                        }
+                    }
                 }
             }
         }
         return battle;
     }
 
-    // placeholder dodge logic
-    private boolean attemptDodge() {
-        return Math.random() < 0.5;
+    public boolean coinFlip(float odds) {
+        return Math.random() < odds;
     }
 }

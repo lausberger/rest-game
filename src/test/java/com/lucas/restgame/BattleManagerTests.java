@@ -117,7 +117,7 @@ public class BattleManagerTests {
 
         battleManager.simulateBattle(battle, BattleAction.DODGE);
 
-        assertSame(battle.getPriority(), 1);
+        assertEquals(1, battle.getPriority());
     }
 
     @Test
@@ -132,7 +132,7 @@ public class BattleManagerTests {
 
         battleManager.simulateBattle(battle, BattleAction.DEFEND);
 
-        assertSame(battle.getPriority(), 0);
+        assertEquals(0, battle.getPriority());
     }
 
     @Test
@@ -153,9 +153,9 @@ public class BattleManagerTests {
         int endPlayerHealth = battle.getPlayer().getHealth();
         int endEnemyHealth = enemy.getHealth();
 
-        assertSame(startPlayerHealth, endPlayerHealth);
-        assertSame(startEnemyHealth, endEnemyHealth);
-        assertSame(battle.getPriority(), -1);
+        assertEquals(startPlayerHealth, endPlayerHealth);
+        assertEquals(startEnemyHealth, endEnemyHealth);
+        assertEquals(-1, battle.getPriority());
     }
 
     @Test
@@ -173,7 +173,7 @@ public class BattleManagerTests {
         battleManager.simulateBattle(battle, BattleAction.ATTACK);
 
         assertTrue(battle.getEnemies().isEmpty());
-        assertSame(battle.getStatus(), BattleStatus.VICTORY);
+        assertEquals(BattleStatus.VICTORY, battle.getStatus());
     }
 
     @Test
@@ -190,8 +190,8 @@ public class BattleManagerTests {
         battle.getPlayer().setHealth(1);
         battleManager.simulateBattle(battle, BattleAction.ATTACK);
 
-        assertSame(battle.getPlayer().getHealth(), 0);
-        assertSame(battle.getStatus(), BattleStatus.DEFEAT);
+        assertEquals(0, battle.getPlayer().getHealth());
+        assertEquals(BattleStatus.DEFEAT, battle.getStatus());
     }
 
     @Test
@@ -211,7 +211,7 @@ public class BattleManagerTests {
         battle.getPlayer().setHealth(1);
         battleManager.simulateBattle(battle, BattleAction.ATTACK);
 
-        assertSame(enemy.getHealth(), enemyInitialHealth);
+        assertEquals(enemy.getHealth(), enemyInitialHealth);
     }
 
     @Test
@@ -230,6 +230,94 @@ public class BattleManagerTests {
         battle.getEnemies().get(0).setHealth(1);
         battleManager.simulateBattle(battle, BattleAction.ATTACK);
 
-        assertSame(battle.getPlayer().getHealth(), playerInitialHealth);
+        assertEquals(battle.getPlayer().getHealth(), playerInitialHealth);
+    }
+
+    @Test
+    /*
+    Given player uses ATTACK
+    When enemy successfully uses DODGE
+    Then enemy should take no damage
+    And enemy should gain attack priority
+     */
+    public void playerAttackEnemyDodgeSuccessful() {
+        // stub getAction() to DODGE
+        forceBattleAction(battle, BattleAction.DODGE);
+        // stub attemptDodge() to always succeed
+        BattleManager stubBattleManager = spy(BattleManager.class);
+        when(stubBattleManager.coinFlip(anyFloat())).thenReturn(true);
+
+        int startingEnemyHealth = battle.getEnemies().get(0).getHealth();
+        stubBattleManager.simulateBattle(battle, BattleAction.ATTACK);
+        int endingEnemyHealth = battle.getEnemies().get(0).getHealth();
+
+        assertEquals(startingEnemyHealth, endingEnemyHealth);
+        assertEquals(1, battle.getPriority());
+    }
+
+    @Test
+    /*
+    Given player uses ATTACK
+    When enemy fails to DODGE
+    Then enemy should take full damage
+    And priority should be neutral
+     */
+    public void playerAttackEnemyDodgeFailure() {
+        // stub getAction() to DODGE
+        forceBattleAction(battle, BattleAction.DODGE);
+        // stub attemptDodge() to always succeed
+        BattleManager stubBattleManager = spy(BattleManager.class);
+        when(stubBattleManager.coinFlip(anyFloat())).thenReturn(false);
+
+        int startingEnemyHealth = battle.getEnemies().get(0).getHealth();
+        stubBattleManager.simulateBattle(battle, BattleAction.ATTACK);
+        int endingEnemyHealth = battle.getEnemies().get(0).getHealth();
+
+        assertTrue(startingEnemyHealth > endingEnemyHealth);
+        assertEquals(-1, battle.getPriority());
+    }
+
+    @Test
+    /*
+    Given player uses DODGE successfully
+    When enemy uses ATTACK
+    Then player should take no damage
+    And player should gain attack priority
+     */
+    public void playerDodgeSuccessEnemyAttack() {
+        // stub getAction() to ATTACK
+        forceBattleAction(battle, BattleAction.ATTACK);
+        // stub attemptDodge() to always succeed
+        BattleManager stubBattleManager = spy(BattleManager.class);
+        when(stubBattleManager.coinFlip(anyFloat())).thenReturn(true);
+
+        int startingPlayerHealth = battle.getPlayer().getHealth();
+        stubBattleManager.simulateBattle(battle, BattleAction.DODGE);
+        int endingPlayerHealth = battle.getPlayer().getHealth();
+
+        assertEquals(startingPlayerHealth, endingPlayerHealth);
+        assertEquals(0, battle.getPriority());
+    }
+
+    @Test
+    /*
+    Given enemy uses ATTACK
+    When player fails to DODGE
+    Then player should take full damage
+    And priority should be neutral
+     */
+    public void playerDodgeFailureEnemyAttack() {
+        // stub getAction() to ATTACK
+        forceBattleAction(battle, BattleAction.ATTACK);
+        // stub attemptDodge() to always succeed
+        BattleManager stubBattleManager = spy(BattleManager.class);
+        when(stubBattleManager.coinFlip(anyFloat())).thenReturn(false);
+
+        int startingPlayerHealth = battle.getPlayer().getHealth();
+        stubBattleManager.simulateBattle(battle, BattleAction.DODGE);
+        int endingPlayerHealth = battle.getPlayer().getHealth();
+
+        assertTrue(startingPlayerHealth > endingPlayerHealth);
+        assertEquals(-1, battle.getPriority());
     }
 }
