@@ -19,10 +19,11 @@ public class BattleController {
 
     private BattleManager battleManager;
 
+
+    // TODO this makes more sense as a PUT!
     @PostMapping("/battles/{id}")
-    // TODO remove debugging exception
     public Battle performBattleAction(
-            @RequestBody String battleID, BattleAction action) {
+            @PathVariable("id") String battleID, @RequestBody BattleAction action) {
         Battle battle = battleRepository.getBattleByID(battleID);
         if (battle == null) {
             throw new ResponseStatusException(
@@ -35,8 +36,7 @@ public class BattleController {
         }
         Battle updatedBattle = battleManager.simulateBattle(battle, action);
         // should updateBattle return a Battle?
-        battleRepository.updateBattle( battleID, updatedBattle);
-        assert (updatedBattle == battle);
+        battleRepository.updateBattle(battleID, updatedBattle);
         return updatedBattle;
     }
 
@@ -57,8 +57,8 @@ public class BattleController {
     }
 
     @PostMapping("/battles")
-    public Battle newBattle(@RequestBody Battle battle) {
-        return battleRepository.saveBattle(battle);
+    public Battle createBattle(@RequestBody Battle battle) {
+        return battleRepository.createBattle(battle);
     }
 
     @DeleteMapping("/battles/{id}")

@@ -38,7 +38,7 @@ public class BattleRepository {
         return new ArrayList<Battle>(scanResult);
     }
 
-    public Battle saveBattle(Battle battle) {
+    public Battle createBattle(Battle battle) {
         dynamoDBMapper.save(battle);
         return battle;
     }

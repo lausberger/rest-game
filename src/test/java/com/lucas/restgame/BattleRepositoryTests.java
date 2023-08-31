@@ -67,7 +67,7 @@ public class BattleRepositoryTests {
      */
     public void addBattleToTable() throws AssertionError {
         Battle battle = new Battle();
-        assertDoesNotThrow(() -> battleRepository.saveBattle(battle));
+        assertDoesNotThrow(() -> battleRepository.createBattle(battle));
     }
 
     @Test
@@ -77,7 +77,7 @@ public class BattleRepositoryTests {
     Then I should be able to find it by its ID
     */
     public void findBattleInTable() throws AssertionError {
-        Battle battle = battleRepository.saveBattle(new Battle());
+        Battle battle = battleRepository.createBattle(new Battle());
         Battle loadedBattle = battleRepository.getBattleByID(battle.getBattleID());
         assertNotNull(loadedBattle);
     }
@@ -89,7 +89,7 @@ public class BattleRepositoryTests {
     Then I should see the changes reflected in the table entry
     */
     public void updateBattleInTable() throws AssertionError {
-        Battle localBattle = battleRepository.saveBattle(
+        Battle localBattle = battleRepository.createBattle(
                 new Battle(new Player(), new Enemy())
         );
         Battle oldBattle = battleRepository.getBattleByID(localBattle.getBattleID());
@@ -108,7 +108,7 @@ public class BattleRepositoryTests {
     Then I should not be able to find it again
      */
     public void deleteBattleInTable() throws AssertionError {
-        Battle battle = battleRepository.saveBattle(new Battle());
+        Battle battle = battleRepository.createBattle(new Battle());
         battleRepository.deleteBattleByID(battle.getBattleID());
         Battle loadedBattle = battleRepository.getBattleByID(battle.getBattleID());
         assertNull(loadedBattle);
@@ -123,7 +123,7 @@ public class BattleRepositoryTests {
     public void getAllBattlesInTable() throws AssertionError {
         HashMap<String, Boolean> battleIDMap = new HashMap<String, Boolean>();
         for (int i = 0; i < 5; i++) {
-            Battle battle = battleRepository.saveBattle(new Battle());
+            Battle battle = battleRepository.createBattle(new Battle());
             battleIDMap.put(battle.getBattleID(), true);
         }
         List<Battle> battlesList = battleRepository.getAllBattles();
@@ -144,7 +144,7 @@ public class BattleRepositoryTests {
             if (i % 2 == 0) {
                 battle.setStatus(BattleStatus.VICTORY);
             }
-            battleRepository.saveBattle(battle);
+            battleRepository.createBattle(battle);
         }
         List<Battle> activeBattles = battleRepository.getActiveBattles();
         for (Battle battle : activeBattles) {
