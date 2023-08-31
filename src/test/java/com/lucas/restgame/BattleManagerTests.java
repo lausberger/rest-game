@@ -34,7 +34,7 @@ public class BattleManagerTests {
      */
     public void forceBattleAction(Battle battle, BattleAction action) {
         Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.getAction()).thenReturn(action);
+        when(enemy.battleAction()).thenReturn(action);
         List<Enemy> enemies = new ArrayList<>();
         enemies.add(enemy);
         battle.setEnemies(enemies);

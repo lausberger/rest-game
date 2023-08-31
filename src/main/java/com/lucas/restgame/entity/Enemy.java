@@ -18,7 +18,7 @@ public class Enemy extends Entity {
     }
 
     @DynamoDBIgnore
-    public BattleAction getAction() {
+    public BattleAction battleAction() {
         double value = Math.random();
         float cur = 0;
         int i;

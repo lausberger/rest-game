@@ -23,7 +23,7 @@ public class BattleManager {
         List<Enemy> enemies = battle.getEnemies();
         // TODO: support for targeting specific enemy
         Enemy enemy = enemies.get(0);
-        BattleAction enemyAction = enemy.getAction();
+        BattleAction enemyAction = enemy.battleAction();
 
         // placeholder dodge probabilities
         if (enemyAction == BattleAction.DODGE
