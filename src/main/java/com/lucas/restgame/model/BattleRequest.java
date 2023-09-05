@@ -5,7 +5,7 @@ import com.lucas.restgame.entity.Enemy;
 public class BattleRequest {
 
     public BattleAction action;
-    public Enemy target;
+    public int target;
 
     public BattleAction getAction() {
         return action;
@@ -14,10 +14,10 @@ public class BattleRequest {
         this.action = action;
     }
 
-    public Enemy getTarget() {
+    public int getTarget() {
         return target;
     }
-    public void setTarget(Enemy target) {
+    public void setTarget(int target) {
         this.target = target;
     }
 }

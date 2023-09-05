@@ -3,13 +3,12 @@ package com.lucas.restgame.controller;
 import com.lucas.restgame.entity.Battle;
 import com.lucas.restgame.model.BattleAction;
 import com.lucas.restgame.model.BattleManager;
+import com.lucas.restgame.model.BattleRequest;
 import com.lucas.restgame.repository.BattleRepository;
-import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import org.json.JSONObject;
 
 import java.util.List;
 
@@ -23,9 +22,13 @@ public class BattleController {
 
 
     // TODO this makes more sense as a PUT!
+    /*
+    it's totally non-RESTful, but battle lookup based on Player/auth token
+    instead of battleID could be more secure and make combat easier
+     */
     @PostMapping("/battles/{id}")
     public Battle performBattleAction(
-            @PathVariable("id") String battleID, @RequestBody JSONObject body) throws JSONException {
+            @PathVariable("id") String battleID, @RequestBody BattleRequest request) {
         Battle battle = battleRepository.getBattleByID(battleID);
         if (battle == null) {
             throw new ResponseStatusException(
@@ -36,7 +39,8 @@ public class BattleController {
                     )
             );
         }
-        BattleAction action = BattleAction.valueOf(body.get("action").toString());
+        BattleAction action = request.getAction();
+        int target = request.getTarget(); // unused for now
         Battle updatedBattle = battleManager.simulateBattle(battle, action);
         // should updateBattle return a Battle?
         battleRepository.updateBattle(battleID, updatedBattle);
