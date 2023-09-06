@@ -26,12 +26,61 @@ public class BattleManager {
         return playerMovesFirst;
     }
 
+    private void reportActions(
+            Battle battle,
+            Entity entity1, BattleAction action1,
+            Entity entity2, BattleAction action2) {
+        battle.addText(
+                String.format(
+                        "%s uses %s!",
+                        entity1.getName(),
+                        action1.name()));
+        battle.addText(
+                String.format(
+                        "%s uses %s!",
+                        entity2.getName(),
+                        action2.name()));
+    }
+
     private void handleAttackAttack(
             Battle battle, Entity attacker1, Entity attacker2) {
-        // calculate damage for e1
-        // calculate damage for e2
-        // apply damage to e2
-        // apply damage to e1
+        // calculate damage
+        int attacker1Dmg = attacker1.getPower() - attacker2.getDefense();
+        int attacker2Dmg = attacker2.getPower() - attacker1.getDefense();
+        // apply damage to second entity
+        attacker2.setHealth(Math.max(0, attacker2.getHealth() - attacker1Dmg));
+        battle.addText(
+                String.format(
+                        "%s hits %s for %s damage!",
+                        attacker1.getName(),
+                        attacker2.getName(),
+                        attacker1Dmg));
+        // report second entity death if needed
+        if (attacker2.isDead()) { // should be a separate method
+            battle.addText(
+                    String.format(
+                            "%s has killed %s.",
+                            attacker1.getName(),
+                            attacker2.getName()));
+        } else {
+            // apply damage to first entity
+            attacker1.setHealth(
+                    Math.max(0, attacker1.getHealth() - attacker2Dmg));
+            battle.addText(
+                    String.format(
+                            "%s hits %s for %s damage!",
+                            attacker2.getName(),
+                            attacker1.getName(),
+                            attacker2Dmg));
+            // report first entity death if needed
+            if (attacker1.isDead()) { // should be a separate method
+                battle.addText(
+                        String.format(
+                                "%s has killed %s.",
+                                attacker2.getName(),
+                                attacker1.getName()));
+            }
+        }
     }
 
     private void handleAttackDodge(
