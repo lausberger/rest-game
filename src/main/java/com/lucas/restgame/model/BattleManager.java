@@ -73,6 +73,50 @@ public class BattleManager {
         }
     }
 
+    /*
+    calculates and applies damage based on power, defense, and a damage
+    multiplier, then updates battle text. does nothing if either entity is dead
+     */
+    private void applyAttackDamage(
+            Battle battle, Entity attacker, Entity target, float modifier) {
+        // avoid redundant operations
+        if (target.isDead() || attacker.isDead()) {
+            return;
+        }
+        // calculate damage
+        int damage = Math.round(
+                (attacker.getPower() - target.getDefense()) * modifier);
+        // apply damage
+        target.setHealth(Math.max(0, target.getHealth() - damage));
+        // update battle text
+        battle.addText(
+                String.format(
+                        "%s hits %s for %s damage!",
+                        attacker.getName(),
+                        target.getName(),
+                        damage));
+        // report target death if needed
+        if (target.isDead()) {
+            battle.addText(
+                    String.format(
+                            "%s has killed %s.",
+                            attacker.getName(),
+                            target.getName()));
+        }
+    }
+
+    private void awardPriority(Battle battle, Entity recipient) {
+        // give priority to recipient
+        // TODO: better priority system for parties
+        int priority = (recipient.getClass() == Player.class) ? 1 : -1;
+        battle.setPriority(priority);
+        // update battle text
+        battle.addText(
+                String.format(
+                        "%s is now poised to act.",
+                        recipient.getName()));
+    }
+
     private void handleAttackAttack(
             Battle battle, Entity attacker1, Entity attacker2) {
         // apply damage to second entity
@@ -85,69 +129,113 @@ public class BattleManager {
             Battle battle, Entity attacker, Entity dodger) {
         // roll for dodge
         boolean dodgeSuccess = coinFlip(0.5f); // replace with entity dodge chance
-        // apply priority if successful
         if (dodgeSuccess) {
-            int priority = (dodger.getClass() == Player.class) ? 0 : -1;
-            battle.setPriority(priority);
+            // update battle text
             battle.addText(
                     String.format(
                             "%s dodges %s's attack!",
                             dodger.getName(),
                             attacker.getName()));
+            // award priority
+            awardPriority(battle, dodger);
         } else {
-            // apply damage if not
+            // update battle text
             battle.addText(
                     String.format(
                             "%s fails to dodge %s's attack.",
                             dodger.getName(),
                             attacker.getName()));
+            // apply damage to dodger
             applyAttackDamage(battle, attacker, dodger);
         }
     }
 
+    private void handleAttackDefend(
+            Battle battle, Entity attacker, Entity defender) {
+        battle.addText(
+                String.format(
+                        "%s readies their shield.",
+                        defender.getName()));
+        // apply halved damage to defender
+        applyAttackDamage(battle, attacker, defender, 0.5f);
+    }
+
     private void handleAttackSpell(
             Battle battle, Entity attacker, Entity caster) {
-        // calculate damage for attacker
         // apply damage to caster
+        applyAttackDamage(battle, attacker, caster);
         // apply spell effect to attacker if no active effects
+        // applySpell(battle, caster, attacker); // TODO: implement spells!
     }
 
     private void handleDefendDefend(
             Battle battle, Entity defender1, Entity defender2) {
-        // do nothing?
-    }
-
-    private void handleDefendAttack(
-            Battle battle, Entity defender, Entity attacker) {
-        // calculate damage for defender and halve
-        // apply damage to defender
+        // update battle text
+        battle.addText("Nothing happens...");
     }
 
     private void handleDefendDodge(
             Battle battle, Entity defender, Entity dodger) {
-        // do not roll for dodge
+        // update battle text
+        battle.addText(
+                String.format(
+                        "%s is unfazed by %s's movement.",
+                        defender.getName(),
+                        dodger.getName()));
         // give priority to defender
-    }
-
-    private void handleDodgeDodge(
-            Battle battle, Entity dodger1, Entity dodger2) {
-        // do nothing?
+        awardPriority(battle, defender);
     }
 
     private void handleDefendSpell(
             Battle battle, Entity defender, Entity caster) {
+        // update battle text
+        battle.addText(
+                String.format(
+                        "%s prepares for a magic attack.",
+                        defender.getName()));
         // apply spell on defender with halved duration
+        // applySpell(battle, caster, defender, 0.5f); // TODO: implement spells!
+    }
+
+    private void handleDodgeDodge(
+            Battle battle, Entity dodger1, Entity dodger2) {
+        // update battle text
+        battle.addText("Both combatants attempt to reposition.");
+        // roll for dodge for both
+        boolean dodge1Success = coinFlip(0.5f);
+        boolean dodge2Success = coinFlip(0.5f);
+        // nothing happens if both succeed or both fail
+        if (dodge1Success == dodge2Success) {
+            battle.addText("Neither manages to gain the advantage.");
+        } else {
+            // award priority to successful dodger
+            Entity successfulDodger = dodge1Success ? dodger1 : dodger2;
+            battle.addText(
+                    String.format(
+                            "%s finds better footing!",
+                            successfulDodger.getName()));
+            awardPriority(battle, successfulDodger);
+        }
     }
 
     private void handleDodgeSpell(
             Battle battle, Entity dodger, Entity caster) {
+        // update battle text
+        battle.addText(
+                String.format(
+                        "%s watches %s's movements closely.",
+                        caster.getName(),
+                        dodger.getName()));
         // apply spell on dodger
+        // applySpell(battle, caster, dodger); // TODO: implement spells!
     }
 
     private void handleSpellSpell(
             Battle battle, Entity caster1, Entity caster2) {
         // apply spell on caster 2 if no active effects
+        // applySpell(battle, caster1, caster2); // TODO: implement spells!
         // apply spell on caster 1 if no active effects
+        // applySpell(battle, caster2, caster1); // TODO: implement spells!
     }
 
     public Battle simulateBattle(
