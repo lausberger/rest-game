@@ -2,11 +2,91 @@ package com.lucas.restgame.model;
 
 import com.lucas.restgame.entity.Battle;
 import com.lucas.restgame.entity.Enemy;
+import com.lucas.restgame.entity.Entity;
 import com.lucas.restgame.entity.Player;
 
 import java.util.List;
 
 public class BattleManager {
+
+    /*
+    Idea:
+    Set-keyed map with function values
+    Call function to apply effects and add text
+     */
+
+    private boolean playerMovesFirst(Battle battle) {
+        boolean playerMovesFirst;
+        if (battle.getPriority() == -1) {
+            // random damage order
+            playerMovesFirst = Math.random() < 0.5f;
+        } else {
+            playerMovesFirst = battle.getPriority() == 0;
+        }
+        return playerMovesFirst;
+    }
+
+    private void handleAttackAttack(
+            Battle battle, Entity attacker1, Entity attacker2) {
+        // calculate damage for e1
+        // calculate damage for e2
+        // apply damage to e2
+        // apply damage to e1
+    }
+
+    private void handleAttackDodge(
+            Battle battle, Entity attacker, Entity dodger) {
+        // roll for dodge
+        // apply priority if successful
+        // calculate attack damage if not
+        // apply damage
+
+    }
+
+    private void handleAttackSpell(
+            Battle battle, Entity attacker, Entity caster) {
+        // calculate damage for attacker
+        // apply damage to caster
+        // apply spell effect to attacker if no active effects
+    }
+
+    private void handleDefendDefend(
+            Battle battle, Entity defender1, Entity defender2) {
+        // do nothing?
+    }
+
+    private void handleDefendAttack(
+            Battle battle, Entity defender, Entity attacker) {
+        // calculate damage for defender and halve
+        // apply damage to defender
+    }
+
+    private void handleDefendDodge(
+            Battle battle, Entity defender, Entity dodger) {
+        // do not roll for dodge
+        // give priority to defender
+    }
+
+    private void handleDodgeDodge(
+            Battle battle, Entity dodger1, Entity dodger2) {
+        // do nothing?
+    }
+
+    private void handleDefendSpell(
+            Battle battle, Entity defender, Entity caster) {
+        // apply spell on defender with halved duration
+    }
+
+    private void handleDodgeSpell(
+            Battle battle, Entity dodger, Entity caster) {
+        // apply spell on dodger
+    }
+
+    private void handleSpellSpell(
+            Battle battle, Entity caster1, Entity caster2) {
+        // apply spell on caster 2 if no active effects
+        // apply spell on caster 1 if no active effects
+    }
 
     public Battle simulateBattle(
             Battle battle, BattleAction playerAction) {
