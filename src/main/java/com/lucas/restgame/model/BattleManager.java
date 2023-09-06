@@ -108,7 +108,7 @@ public class BattleManager {
     private void awardPriority(Battle battle, Entity recipient) {
         // give priority to recipient
         // TODO: better priority system for parties
-        int priority = (recipient.getClass() == Player.class) ? 1 : -1;
+        int priority = (recipient.getClass() == Player.class) ? 0 : 1;
         battle.setPriority(priority);
         // update battle text
         battle.addText(
