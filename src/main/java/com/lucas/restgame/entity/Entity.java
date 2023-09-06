@@ -49,4 +49,6 @@ public class Entity {
     public void setDefense(int defense) {
         this.defense = defense;
     }
+
+    public boolean isDead() { return this.health == 0; }
 }
