@@ -42,54 +42,67 @@ public class BattleManager {
                         action2.name()));
     }
 
-    private void handleAttackAttack(
-            Battle battle, Entity attacker1, Entity attacker2) {
+    /*
+    calculates and applies damage based on power and defense, then
+    updates battle text. does nothing if either entity is dead.
+     */
+    private void applyAttackDamage(
+            Battle battle, Entity attacker, Entity target) {
+        // avoid redundant operations
+        if (target.isDead() || attacker.isDead()) {
+            return;
+        }
         // calculate damage
-        int attacker1Dmg = attacker1.getPower() - attacker2.getDefense();
-        int attacker2Dmg = attacker2.getPower() - attacker1.getDefense();
-        // apply damage to second entity
-        attacker2.setHealth(Math.max(0, attacker2.getHealth() - attacker1Dmg));
+        int damage = attacker.getPower() - target.getDefense();
+        // apply damage
+        target.setHealth(Math.max(0, target.getHealth() - damage));
+        // update battle text
         battle.addText(
                 String.format(
                         "%s hits %s for %s damage!",
-                        attacker1.getName(),
-                        attacker2.getName(),
-                        attacker1Dmg));
-        // report second entity death if needed
-        if (attacker2.isDead()) { // should be a separate method
+                        attacker.getName(),
+                        target.getName(),
+                        damage));
+        // report target death if needed
+        if (target.isDead()) {
             battle.addText(
                     String.format(
                             "%s has killed %s.",
-                            attacker1.getName(),
-                            attacker2.getName()));
-        } else {
-            // apply damage to first entity
-            attacker1.setHealth(
-                    Math.max(0, attacker1.getHealth() - attacker2Dmg));
-            battle.addText(
-                    String.format(
-                            "%s hits %s for %s damage!",
-                            attacker2.getName(),
-                            attacker1.getName(),
-                            attacker2Dmg));
-            // report first entity death if needed
-            if (attacker1.isDead()) { // should be a separate method
-                battle.addText(
-                        String.format(
-                                "%s has killed %s.",
-                                attacker2.getName(),
-                                attacker1.getName()));
-            }
+                            attacker.getName(),
+                            target.getName()));
         }
+    }
+
+    private void handleAttackAttack(
+            Battle battle, Entity attacker1, Entity attacker2) {
+        // apply damage to second entity
+        applyAttackDamage(battle, attacker1, attacker2);
+        // apply damage to first entity
+        applyAttackDamage(battle, attacker2, attacker1);
     }
 
     private void handleAttackDodge(
             Battle battle, Entity attacker, Entity dodger) {
         // roll for dodge
+        boolean dodgeSuccess = coinFlip(0.5f); // replace with entity dodge chance
         // apply priority if successful
-        // calculate attack damage if not
-        // apply damage
-
+        if (dodgeSuccess) {
+            int priority = (dodger.getClass() == Player.class) ? 0 : -1;
+            battle.setPriority(priority);
+            battle.addText(
+                    String.format(
+                            "%s dodges %s's attack!",
+                            dodger.getName(),
+                            attacker.getName()));
+        } else {
+            // apply damage if not
+            battle.addText(
+                    String.format(
+                            "%s fails to dodge %s's attack.",
+                            dodger.getName(),
+                            attacker.getName()));
+            applyAttackDamage(battle, attacker, dodger);
+        }
     }
 
     private void handleAttackSpell(
