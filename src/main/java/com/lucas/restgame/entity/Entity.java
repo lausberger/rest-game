@@ -1,6 +1,7 @@
 package com.lucas.restgame.entity;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIgnore;
 
 @DynamoDBDocument
 public class Entity {
@@ -50,5 +51,6 @@ public class Entity {
         this.defense = defense;
     }
 
+    @DynamoDBIgnore
     public boolean isDead() { return this.health == 0; }
 }
