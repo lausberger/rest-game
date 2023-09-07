@@ -8,22 +8,58 @@ import com.lucas.restgame.entity.Player;
 import java.util.*;
 
 public class BattleManager {
+    
+    private final Battle battle;
 
-    private static boolean playerMovesFirst(Battle battle) {
-        boolean playerMovesFirst;
-        if (battle.getPriority() == -1) {
-            // random damage order
-            playerMovesFirst = Math.random() < 0.5f;
-        } else {
-            playerMovesFirst = battle.getPriority() == 0;
+    public BattleManager(Battle battle) {
+        if (battle.getStatus() != BattleStatus.ONGOING) {
+            throw new IllegalArgumentException("Battle has already concluded");
         }
-        return playerMovesFirst;
+        this.battle = battle;
     }
 
-    private static void reportAction(
-            Battle battle,
-            Entity entity1, BattleAction action1) {
-        battle.addText(
+    private boolean playerMovesFirst() {
+        if (getBattlePriority() == -1) {
+            // random damage order
+            return Math.random() < 0.5f;
+        } else {
+            return getBattlePriority() == 0;
+        }
+    }
+
+    private void addBattleText(String text) {
+        this.battle.addText(text);
+    }
+
+    private void clearBattleText() {
+        this.battle.resetText();
+    }
+
+    private BattleStatus getBattleStatus() {
+        return this.battle.getStatus();
+    }
+    private void setBattleStatus(BattleStatus status) {
+        this.battle.setStatus(status);
+    }
+
+    private int getBattlePriority() {
+        return this.battle.getPriority();
+    }
+
+    private void setBattlePriority(int priority) {
+        this.battle.setPriority(priority);
+    }
+
+    private Player getPlayer() {
+        return this.battle.getPlayer();
+    }
+
+    private List<Enemy> getEnemies() {
+        return this.battle.getEnemies();
+    }
+
+    private void reportAction(Entity entity1, BattleAction action1) {
+        addBattleText(
                 String.format(
                         "%s uses %s!",
                         entity1.getName(),
@@ -34,8 +70,7 @@ public class BattleManager {
     calculates and applies damage based on power and defense, then
     updates battle text. does nothing if either entity is dead.
      */
-    private static void applyAttackDamage(
-            Battle battle, Entity attacker, Entity target) {
+    private void applyAttackDamage(Entity attacker, Entity target) {
         // avoid redundant operations
         if (target.isDead() || attacker.isDead()) {
             return;
@@ -45,7 +80,7 @@ public class BattleManager {
         // apply damage
         target.setHealth(Math.max(0, target.getHealth() - damage));
         // update battle text
-        battle.addText(
+        addBattleText(
                 String.format(
                         "%s hits %s for %s damage!",
                         attacker.getName(),
@@ -53,7 +88,7 @@ public class BattleManager {
                         damage));
         // report target death if needed
         if (target.isDead()) {
-            battle.addText(
+            addBattleText(
                     String.format(
                             "%s has killed %s.",
                             attacker.getName(),
@@ -65,8 +100,8 @@ public class BattleManager {
     calculates and applies damage based on power, defense, and a damage
     multiplier, then updates battle text. does nothing if either entity is dead
      */
-    private static void applyAttackDamage(
-            Battle battle, Entity attacker, Entity target, float modifier) {
+    private void applyAttackDamage(
+            Entity attacker, Entity target, float modifier) {
         // avoid redundant operations
         if (target.isDead() || attacker.isDead()) {
             return;
@@ -77,7 +112,7 @@ public class BattleManager {
         // apply damage
         target.setHealth(Math.max(0, target.getHealth() - damage));
         // update battle text
-        battle.addText(
+        addBattleText(
                 String.format(
                         "%s hits %s for %s damage!",
                         attacker.getName(),
@@ -85,7 +120,7 @@ public class BattleManager {
                         damage));
         // report target death if needed
         if (target.isDead()) {
-            battle.addText(
+            addBattleText(
                     String.format(
                             "%s has killed %s.",
                             attacker.getName(),
@@ -93,152 +128,85 @@ public class BattleManager {
         }
     }
 
-    private static void awardPriority(Battle battle, Entity recipient) {
+    private void awardPriorityTo(Entity recipient) {
         // give priority to recipient
         // TODO: better priority system for parties
         int priority = (recipient.getClass() == Player.class) ? 0 : 1;
-        battle.setPriority(priority);
+        setBattlePriority(priority);
         // update battle text
-        battle.addText(
+        addBattleText(
                 String.format(
                         "%s is poised to act.",
                         recipient.getName()));
     }
 
-    // first entity moves first
-    private static void handleAttackAttack(
-            Battle battle, Entity attacker1, Entity attacker2) {
-        // apply damage to second entity
-        applyAttackDamage(battle, attacker1, attacker2);
-        // apply damage to first entity
-        applyAttackDamage(battle, attacker2, attacker1);
+    // first entity will deal damage first
+    private void handleAttackAttack(Entity attacker1, Entity attacker2) {
+        // first attacker deals damage
+        applyAttackDamage(attacker1, attacker2);
+        // second attacker deals damage
+        applyAttackDamage(attacker2, attacker1);
     }
 
-    private static void handleAttackDodge(
-            Battle battle,
-            Entity player,
-            Entity enemy,
-            BattleAction playerAction) {
-        // determine roles
-        Entity attacker, dodger;
-        if (playerAction == BattleAction.ATTACK) {
-            attacker = player;
-            dodger = player;
-        } else {
-            attacker = enemy;
-            dodger = player;
-        }
+    private void handleAttackDodge(Entity attacker, Entity dodger) {
         // roll for dodge
         boolean dodgeSuccess = coinFlip(0.5f); // replace with entity dodge chance
         if (dodgeSuccess) {
             // update battle text
-            battle.addText(
+            addBattleText(
                     String.format(
                             "%s dodges %s's attack!",
                             dodger.getName(),
                             attacker.getName()));
             // award priority
-            awardPriority(battle, dodger);
+            awardPriorityTo(dodger);
         } else {
             // update battle text
-            battle.addText(
+            addBattleText(
                     String.format(
                             "%s fails to dodge %s's attack.",
                             dodger.getName(),
                             attacker.getName()));
             // apply damage to dodger
-            applyAttackDamage(battle, attacker, dodger);
+            applyAttackDamage(attacker, dodger);
         }
     }
 
-    private static void handleAttackDefend(
-            Battle battle,
-            Entity player,
-            Entity enemy,
-            BattleAction playerAction) {
-        // determine roles
-        Entity attacker, defender;
-        if (playerAction == BattleAction.ATTACK) {
-            attacker = player;
-            defender = enemy;
-        } else {
-            attacker = enemy;
-            defender = player;
-        }
-        battle.addText(
+    private void handleAttackDefend(Entity attacker, Entity defender) {
+        addBattleText(
                 String.format(
                         "%s readies their shield.",
                         defender.getName()));
         // apply halved damage to defender
-        applyAttackDamage(battle, attacker, defender, 0.5f);
+        applyAttackDamage(attacker, defender, 0.5f);
     }
 
-    private static void handleAttackSpell(
-            Battle battle,
-            Entity player,
-            Entity enemy,
-            BattleAction playerAction) {
-        // determine roles
-        Entity attacker, caster;
-        if (playerAction == BattleAction.ATTACK) {
-            attacker = player;
-            caster = enemy;
-        } else {
-            attacker = enemy;
-            caster = player;
-        }
+    private void handleAttackSpell(Entity attacker, Entity caster) {
         // apply damage to caster
-        applyAttackDamage(battle, attacker, caster);
+        applyAttackDamage(attacker, caster);
         // apply spell effect to attacker if no active effects
         // applySpell(battle, caster, attacker); // TODO: implement spells!
     }
 
-    private static void handleDefendDefend(
-            Battle battle, Entity defender1, Entity defender2) {
+    private void handleDefendDefend(Entity defender1, Entity defender2) {
         // update battle text
-        battle.addText("Nothing happens...");
+        addBattleText("Nothing happens...");
     }
 
-    private static void handleDefendDodge(
-            Battle battle,
-            Entity player,
-            Entity enemy,
-            BattleAction playerAction) {
-        // determine roles
-        Entity defender, dodger;
-        if (playerAction == BattleAction.DEFEND) {
-            defender = player;
-            dodger = enemy;
-        } else {
-            defender = enemy;
-            dodger = player;
-        }
+    private void handleDefendDodge(Entity defender, Entity dodger) {
         // update battle text
-        battle.addText(
+        addBattleText(
                 String.format(
                         "%s is unfazed by %s's movement.",
                         defender.getName(),
                         dodger.getName()));
         // give priority to defender
-        awardPriority(battle, defender);
+        awardPriorityTo(defender);
     }
 
-    private static void handleDefendSpell(
-            Battle battle,
-            Entity player,
-            Entity enemy,
-            BattleAction playerAction) {
-        // determine roles
-        Entity defender, caster;
-        if (playerAction == BattleAction.DEFEND) {
-            defender = player;
-            caster = enemy;
-        } else {
-            defender = enemy;
-            caster = player;
-        }
+    private void handleDefendSpell(Entity defender, Entity caster) {
         // update battle text
-        battle.addText(
+        addBattleText(
                 String.format(
                         "%s prepares for a magic attack.",
                         defender.getName()));
@@ -246,43 +214,29 @@ public class BattleManager {
         // applySpell(battle, caster, defender, 0.5f); // TODO: implement spells!
     }
 
-    private static void handleDodgeDodge(
-            Battle battle, Entity dodger1, Entity dodger2) {
+    private void handleDodgeDodge(Entity dodger1, Entity dodger2) {
         // update battle text
-        battle.addText("Both combatants attempt to reposition.");
+        addBattleText("Both combatants attempt to reposition.");
         // roll for dodge for both
         boolean dodge1Success = coinFlip(0.5f);
         boolean dodge2Success = coinFlip(0.5f);
         // nothing happens if both succeed or both fail
         if (dodge1Success == dodge2Success) {
-            battle.addText("Neither manages to gain the advantage.");
+            addBattleText("Neither manages to gain the advantage.");
         } else {
             // award priority to successful dodger
             Entity successfulDodger = dodge1Success ? dodger1 : dodger2;
-            battle.addText(
+            addBattleText(
                     String.format(
                             "%s finds better footing!",
                             successfulDodger.getName()));
-            awardPriority(battle, successfulDodger);
+            awardPriorityTo(successfulDodger);
         }
     }
 
-    private static void handleDodgeSpell(
-            Battle battle,
-            Entity player,
-            Entity enemy,
-            BattleAction playerAction) {
-        // determine roles
-        Entity dodger, caster;
-        if (playerAction == BattleAction.DODGE) {
-            dodger = player;
-            caster = enemy;
-        } else {
-            dodger = enemy;
-            caster = player;
-        }
+    private void handleDodgeSpell(Entity dodger, Entity caster) {
         // update battle text
-        battle.addText(
+        addBattleText(
                 String.format(
                         "%s watches %s's movements closely.",
                         caster.getName(),
@@ -292,74 +246,67 @@ public class BattleManager {
     }
 
     // applies spells in order of parameters
-    private static void handleSpellSpell(
-            Battle battle, Entity caster1, Entity caster2) {
+    private void handleSpellSpell(Entity caster1, Entity caster2) {
         // apply spell on caster 2 if no active effects
         // applySpell(battle, caster1, caster2); // TODO: implement spells!
         // apply spell on caster 1 if no active effects
         // applySpell(battle, caster2, caster1); // TODO: implement spells!
     }
 
-    public static boolean coinFlip(float odds) {
+    public boolean coinFlip(float odds) {
         return Math.random() < odds;
     }
 
-    public static Battle simulateBattle(
-            Battle battle, BattleAction playerAction) {
+    public Battle performTurn(BattleAction playerAction) {
         // do nothing if battle has already ended
-        if (battle.getStatus() != BattleStatus.ONGOING) {
-            return battle;
+        if (getBattleStatus() != BattleStatus.ONGOING) {
+            return this.battle;
         }
 
-        // reset priority to neutral
-        battle.setPriority(-1);
-
         // reset battle text for turn
-//        battle.resetText(); // off for debugging
+//        clearBattleText(); // off for debugging
 
-        Player player = battle.getPlayer();
-        List<Enemy> enemies = battle.getEnemies();
+        Player player = getPlayer();
+        List<Enemy> enemies = getEnemies();
         // TODO: support for targeting specific enemy
         Enemy enemy = enemies.get(0);
         BattleAction enemyAction = enemy.battleAction();
 
         // determine turn order
-        boolean playerMovesFirst;
-        if (battle.getPriority() == -1) {
-            // random damage order
-            playerMovesFirst = Math.random() < 0.5f;
-        } else {
-            playerMovesFirst = battle.getPriority() == 0;
-        }
+        boolean playerMovesFirst = playerMovesFirst();
 
         // update battle text with actions used
         if (playerMovesFirst) {
-            reportAction(battle, player, playerAction);
-            reportAction(battle, enemy, enemyAction);
+            reportAction(player, playerAction);
+            reportAction(enemy, enemyAction);
         } else {
-            reportAction(battle, enemy, enemyAction);
-            reportAction(battle, player, playerAction);
+            reportAction(enemy, enemyAction);
+            reportAction(player, playerAction);
         }
+
+        // reset priority to neutral
+        setBattlePriority(-1);
 
         // call action handler function
         Set<BattleAction> turnType = Set.copyOf(List.of(playerAction, enemyAction));
         BMFunc turnHandler = actionHandlers.get(turnType);
-        turnHandler.run(battle, player, enemy, playerAction);
+        turnHandler.run(player, enemy, playerMovesFirst, playerAction);
 
+        // TODO replace with method
         // handle deaths and status
         if (player.isDead()) {
             // report game over
-            battle.addText(
+            addBattleText(
                     String.format(
                             "%s has killed %s.",
                             enemy.getName(),
                             player.getName()));
-            battle.addText("The battle is lost.");
+            addBattleText("The battle is lost.");
             // update status
-            battle.setStatus(BattleStatus.DEFEAT);
+            setBattleStatus(BattleStatus.DEFEAT);
         } else if (enemy.isDead()) {
             // report death
-            battle.addText(
+            addBattleText(
                     String.format(
                             "%s has killed %s.",
                             player.getName(),
@@ -368,8 +315,8 @@ public class BattleManager {
             enemies.remove(enemy);
             // check for victory
             if (enemies.isEmpty()) {
-                battle.setStatus(BattleStatus.VICTORY);
-                battle.addText(
+                setBattleStatus(BattleStatus.VICTORY);
+                addBattleText(
                         String.format(
                                 "%s is victorious!",
                                 player.getName()));
@@ -379,51 +326,104 @@ public class BattleManager {
         return battle;
     }
 
-    private static final Map<Set<BattleAction>, BMFunc> actionHandlers = Map.of(
+    private final Map<Set<BattleAction>, BMFunc> actionHandlers = Map.of(
             // ATTACK ATTACK
-            Set.copyOf(List.of(BattleAction.ATTACK, BattleAction.ATTACK)),
-            (b, e1, e2, a) ->
-                    handleAttackAttack((Battle) b, (Entity) e1, (Entity) e2),
+            Set.copyOf(List.of(BattleAction.ATTACK)),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (friendlyFirst) {
+                    handleAttackAttack((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleAttackAttack((Entity) enemy, (Entity) friendly);
+                }
+            },
+
             // ATTACK DEFEND
             Set.copyOf(List.of(BattleAction.ATTACK, BattleAction.DEFEND)),
-            (b, e1, e2, a) ->
-                    handleAttackDefend((Battle) b, (Entity) e1, (Entity) e2, a),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.ATTACK) {
+                    handleAttackDefend((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleAttackDefend((Entity) enemy, (Entity) friendly);
+                }
+            },
+
             // ATTACK DODGE
             Set.copyOf(List.of(BattleAction.ATTACK, BattleAction.DODGE)),
-            (b, e1, e2, a) ->
-                    handleAttackDodge((Battle) b, (Entity) e1, (Entity) e2, a),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.ATTACK) {
+                    handleAttackDodge((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleAttackDodge((Entity) enemy, (Entity) friendly);
+                }
+            },
+
             // ATTACK SPELL
             Set.copyOf(List.of(BattleAction.ATTACK, BattleAction.SPELL)),
-            (b, e1, e2, a) ->
-                    handleAttackSpell((Battle) b, (Entity) e1, (Entity) e2, a),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.ATTACK) {
+                    handleAttackSpell((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleAttackSpell((Entity) enemy, (Entity) friendly);
+                }
+            },
+
             // DEFEND DEFEND
-            Set.copyOf(List.of(BattleAction.DEFEND, BattleAction.DEFEND)),
-            (b, e1, e2, a) ->
-                    handleDefendDefend((Battle) b, (Entity) e1, (Entity) e2),
+            Set.copyOf(List.of(BattleAction.DEFEND)),
+            (friendly, enemy, friendlyFirst, action) ->
+                handleDefendDefend((Entity) friendly, (Entity) enemy),
+
             // DEFEND DODGE
             Set.copyOf(List.of(BattleAction.DEFEND, BattleAction.DODGE)),
-            (b, e1, e2, a) ->
-                    handleDefendDodge((Battle) b, (Entity) e1, (Entity) e2, a),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.DEFEND) {
+                    handleDefendDodge((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleDefendDodge((Entity) enemy, (Entity) friendly);
+                }
+            },
+
             // DEFEND SPELL
             Set.copyOf(List.of(BattleAction.DEFEND, BattleAction.SPELL)),
-            (b, e1, e2, a) ->
-                    handleDefendSpell((Battle) b, (Entity) e1, (Entity) e2, a),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.DEFEND) {
+                    handleDefendSpell((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleDefendSpell((Entity) enemy, (Entity) friendly);
+                }
+            },
+
             // DODGE DODGE
-            Set.copyOf(List.of(BattleAction.DODGE, BattleAction.DODGE)),
-            (b, e1, e2, a) ->
-                    handleDodgeDodge((Battle) b, (Entity) e1, (Entity) e2),
+            Set.copyOf(List.of(BattleAction.DODGE)),
+            (friendly, enemy, friendlyFirst, a) ->
+                handleDodgeDodge((Entity) friendly, (Entity) enemy),
+
             // DODGE SPELL
             Set.copyOf(List.of(BattleAction.DODGE, BattleAction.SPELL)),
-            (b, e1, e2, a) ->
-                    handleDodgeSpell((Battle) b, (Entity) e1, (Entity) e2, a),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.DODGE) {
+                    handleDodgeSpell((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleDodgeSpell((Entity) enemy, (Entity) friendly);
+                }
+            },
+
             // SPELL SPELL
-            Set.copyOf(List.of(BattleAction.SPELL, BattleAction.SPELL)),
-            (b, e1, e2, a) ->
-                    handleSpellSpell((Battle) b, (Entity) e1, (Entity) e2)
+            Set.copyOf(List.of(BattleAction.SPELL)),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (friendlyFirst) {
+                    handleSpellSpell((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleSpellSpell((Entity) enemy, (Entity) friendly);
+                }
+            }
     );
 
     @FunctionalInterface
-    private interface BMFunc<Battle, Entity> {
-        public void run(Battle battle, Entity entity1, Entity entity2, BattleAction playerAction);
+    private interface BMFunc<Entity, BattleAction> {
+        public void run(
+                Entity entity1,
+                Entity entity2,
+                boolean entity1First,
+                BattleAction action);
     }
 }

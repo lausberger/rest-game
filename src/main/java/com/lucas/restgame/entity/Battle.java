@@ -73,7 +73,12 @@ public class Battle {
 
     @DynamoDBAttribute
     public int getPriority() { return this.priority; }
-    public void setPriority(int priority) { this.priority = priority; }
+    public void setPriority(int priority) throws IllegalArgumentException {
+        if (priority > 1 || priority < -1) {
+            throw new IllegalArgumentException("Valid values: -1, 0, 1");
+        }
+        this.priority = priority;
+    }
 
     @DynamoDBAttribute
     public String getText() { return this.text; }
