@@ -9,12 +9,18 @@ public class Enemy extends Entity {
     public Enemy() {
         this.setName("Enemy");
         this.setHealth(100);
-        this.setPower(20);
-        this.setDefense(10);
+        this.setPower(25);
+        this.setDefense(5);
+        this.setDodgeChance(0.5f);
     }
 
-    public Enemy(String name, int health, int power, int defense) {
-        super(name, health, power, defense);
+    public Enemy(
+            String name,
+            int health,
+            int power,
+            int defense,
+            float dodgeChance) {
+        super(name, health, power, defense, dodgeChance);
     }
 
     @DynamoDBIgnore

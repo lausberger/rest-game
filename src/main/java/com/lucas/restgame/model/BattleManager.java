@@ -152,7 +152,7 @@ public class BattleManager {
     private void handleAttackDodge(Entity attacker, Entity dodger) {
         // roll for dodge
 //        boolean dodgeSuccess = coinFlip(0.5f); // replace with entity dodge chance
-        boolean dodgeSuccess = dodger.dodge();
+        boolean dodgeSuccess = dodger.attemptDodge();
         if (dodgeSuccess) {
             // update battle text
             addBattleText(

@@ -7,7 +7,8 @@ public class Goblin extends Enemy {
     public Goblin() {
         this.setName("Goblin");
         this.setHealth(80);
-        this.setPower(15);
+        this.setPower(20);
         this.setDefense(5);
+        this.setDodgeChance(0.5f);
     }
 }

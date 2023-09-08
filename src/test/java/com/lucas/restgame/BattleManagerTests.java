@@ -24,8 +24,8 @@ public class BattleManagerTests {
 
     @BeforeEach
     public void setup() {
-        Player player = new Player("Player", 100, 20, 10);
-        Enemy enemy = new Enemy("Enemy", 100, 20, 10);
+        Player player = new Player("Player", 100, 20, 10, 0.5f);
+        Enemy enemy = new Enemy("Enemy", 100, 20, 10, 0.5f);
         battle = new Battle(player, enemy);
         battleManager = new BattleManager(battle);
     }
@@ -43,14 +43,14 @@ public class BattleManagerTests {
 
     public void forceEnemyDodgeOutcome(boolean outcome) {
         Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.dodge()).thenReturn(outcome);
+        when(enemy.attemptDodge()).thenReturn(outcome);
         List<Enemy> enemies = new ArrayList<>(List.of(enemy));
         battle.setEnemies(enemies);
     }
 
     public void forcePlayerDodgeOutcome(boolean outcome) {
         Player player = spy(battle.getPlayer());
-        when(player.dodge()).thenReturn(outcome);
+        when(player.attemptDodge()).thenReturn(outcome);
         battle.setPlayer(player);
     }
 
@@ -263,7 +263,7 @@ public class BattleManagerTests {
         // stub dodge() to always succeed
         Enemy enemy = spy(battle.getEnemies().get(0));
         when(enemy.battleAction()).thenReturn(BattleAction.DODGE);
-        when(enemy.dodge()).thenReturn(true);
+        when(enemy.attemptDodge()).thenReturn(true);
         List<Enemy> enemies = new ArrayList<>(List.of(enemy));
         battle.setEnemies(enemies);
 
@@ -286,7 +286,7 @@ public class BattleManagerTests {
         // stub dodge() to always fail
         Enemy enemy = spy(battle.getEnemies().get(0));
         when(enemy.battleAction()).thenReturn(BattleAction.DODGE);
-        when(enemy.dodge()).thenReturn(false);
+        when(enemy.attemptDodge()).thenReturn(false);
         List<Enemy> enemies = new ArrayList<>(List.of(enemy));
         battle.setEnemies(enemies);
 
@@ -313,7 +313,7 @@ public class BattleManagerTests {
         battle.setEnemies(enemies);
         // stub dodge() to always succeed
         Player player = spy(battle.getPlayer());
-        when(player.dodge()).thenReturn(true);
+        when(player.attemptDodge()).thenReturn(true);
         battle.setPlayer(player);
 
         int startingPlayerHealth = battle.getPlayer().getHealth();
@@ -338,7 +338,7 @@ public class BattleManagerTests {
         battle.setEnemies(enemies);
         // stub dodge() to always fail
         Player player = spy(battle.getPlayer());
-        when(player.dodge()).thenReturn(false);
+        when(player.attemptDodge()).thenReturn(false);
         battle.setPlayer(player);
 
         int startingPlayerHealth = battle.getPlayer().getHealth();
