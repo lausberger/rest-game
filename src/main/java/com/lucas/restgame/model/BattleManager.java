@@ -86,14 +86,6 @@ public class BattleManager {
                         attacker.getName(),
                         target.getName(),
                         damage));
-        // report target death if needed
-        if (target.isDead()) {
-            addBattleText(
-                    String.format(
-                            "%s has killed %s.",
-                            attacker.getName(),
-                            target.getName()));
-        }
     }
 
     /*
@@ -118,14 +110,6 @@ public class BattleManager {
                         attacker.getName(),
                         target.getName(),
                         damage));
-        // report target death if needed
-        if (target.isDead()) {
-            addBattleText(
-                    String.format(
-                            "%s has killed %s.",
-                            attacker.getName(),
-                            target.getName()));
-        }
     }
 
     private void awardPriorityTo(Entity recipient) {
