@@ -8,52 +8,35 @@ import com.lucas.restgame.model.BattleManager;
 import com.lucas.restgame.model.BattleStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
-import org.mockito.Mock;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class BattleManagerTests {
-    
+
+    private Enemy enemyStub;
     private Battle battle;
-    @Mock
     private BattleManager battleManager;
 
     @BeforeEach
     public void setup() {
         Player player = new Player("Player", 100, 20, 10, 0.5f);
-        Enemy enemy = new Enemy("Enemy", 100, 20, 10, 0.5f);
-        battle = new Battle(player, enemy);
+        enemyStub = spy(new Enemy("Enemy", 100, 20, 10, 0.5f));
+        battle = new Battle(player, enemyStub);
         battleManager = new BattleManager(battle);
     }
 
-    /*
-     Stub the first Enemy to always perform a given BattleAction.
-     TODO: support for specifying which enemy/enemies to stub
-     */
-    public void forceEnemyBattleAction(BattleAction action) {
-        Enemy stubEnemy = spy(battle.getEnemies().get(0));
-        when(stubEnemy.battleAction()).thenReturn(action);
-        List<Enemy> enemies = new ArrayList<>(List.of(stubEnemy));
-        battle.setEnemies(enemies);
+    public void enemyStubBattleAction(BattleAction action) {
+        when(enemyStub.battleAction()).thenReturn(action);
     }
-
-    public void forceEnemyDodgeOutcome(boolean outcome) {
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.attemptDodge()).thenReturn(outcome);
-        List<Enemy> enemies = new ArrayList<>(List.of(enemy));
-        battle.setEnemies(enemies);
+    public void enemyStubDodgeOutcome(boolean outcome) {
+        when(enemyStub.attemptDodge()).thenReturn(outcome);
     }
-
     public void forcePlayerDodgeOutcome(boolean outcome) {
         Player player = spy(battle.getPlayer());
         when(player.attemptDodge()).thenReturn(outcome);
         battle.setPlayer(player);
     }
-
 
     @Test
     /*
@@ -63,16 +46,15 @@ public class BattleManagerTests {
      */
     public void playerAttacksEnemyAttacks() {
         // stub battleAction() to ATTACK
-        forceEnemyBattleAction(BattleAction.ATTACK);
+        enemyStubBattleAction(BattleAction.ATTACK);
 
         // starting health
-        Enemy enemy = battle.getEnemies().get(0);
         Player player = battle.getPlayer();
-        int enemyHealthBefore = enemy.getHealth();
+        int enemyHealthBefore = enemyStub.getHealth();
         int playerHealthBefore = player.getHealth();
         battleManager.performTurn(BattleAction.ATTACK);
 
-        assertTrue(enemyHealthBefore > enemy.getHealth());
+        assertTrue(enemyHealthBefore > enemyStub.getHealth());
         assertTrue(playerHealthBefore > player.getHealth());
     }
 
@@ -84,13 +66,13 @@ public class BattleManagerTests {
      */
     public void playerDefendsEnemyAttacks() {
         // stub battleAction() to ATTACK
-        forceEnemyBattleAction(BattleAction.ATTACK);
+        enemyStubBattleAction(BattleAction.ATTACK);
 
-        Enemy enemy = battle.getEnemies().get(0);
         Player player = battle.getPlayer();
         // full damage amount subtracted from player health
+        // not a good test, requires too much implementation knowledge!
         int undefendedHealth = player.getHealth()
-                - (enemy.getPower() - player.getDefense());
+                - (enemyStub.getPower() - player.getDefense());
         // get actual health after defending
         battleManager.performTurn(BattleAction.DEFEND);
 
@@ -105,18 +87,18 @@ public class BattleManagerTests {
      */
     public void playerAttacksEnemyDefends() {
         // stub battleAction() to DEFEND
-        forceEnemyBattleAction(BattleAction.DEFEND);
+        enemyStubBattleAction(BattleAction.DEFEND);
 
-        Enemy enemy = battle.getEnemies().get(0);
         Player player = battle.getPlayer();
         // full damage amount subtracted from enemy health
-        int undefendedHealth = enemy.getHealth()
-                - (player.getPower() - enemy.getDefense());
+        // not a good test, requires too much implementation knowledge!
+        int undefendedHealth = enemyStub.getHealth()
+                - (player.getPower() - enemyStub.getDefense());
 
         // get actual health after defending
         battleManager.performTurn(BattleAction.ATTACK);
 
-        assertTrue(enemy.getHealth() > undefendedHealth);
+        assertTrue(enemyStub.getHealth() > undefendedHealth);
     }
 
     @Test
@@ -127,7 +109,7 @@ public class BattleManagerTests {
      */
     public void priorityWhenPlayerDodgesEnemyDefends() {
         // stub battleAction() to DEFEND
-        forceEnemyBattleAction(BattleAction.DEFEND);
+        enemyStubBattleAction(BattleAction.DEFEND);
 
         battleManager.performTurn(BattleAction.DODGE);
 
@@ -142,7 +124,7 @@ public class BattleManagerTests {
      */
     public void priorityWhenPlayerDefendsEnemyDodges() {
         // stub battleAction() to DODGE
-        forceEnemyBattleAction(BattleAction.DODGE);
+        enemyStubBattleAction(BattleAction.DODGE);
 
         battleManager.performTurn(BattleAction.DEFEND);
 
@@ -158,16 +140,15 @@ public class BattleManagerTests {
     // this needs to be rewritten since dodge change in d20a971
     public void playerDodgesEnemyDodges() {
         // stub battleAction() to DODGE
-        forceEnemyBattleAction(BattleAction.DODGE);
+        enemyStubBattleAction(BattleAction.DODGE);
 
-        Enemy enemy = battle.getEnemies().get(0);
         Player player = battle.getPlayer();
         int startPlayerHealth = player.getHealth();
-        int startEnemyHealth = enemy.getHealth();
+        int startEnemyHealth = enemyStub.getHealth();
         battleManager.performTurn(BattleAction.DODGE);
 
         assertEquals(startPlayerHealth, player.getHealth());
-        assertEquals(startEnemyHealth, enemy.getHealth());
+        assertEquals(startEnemyHealth, enemyStub.getHealth());
 //        assertEquals(-1, battle.getPriority());
     }
 
@@ -180,10 +161,9 @@ public class BattleManagerTests {
      */
     public void playerVictory() {
         // stub battleAction() to ATTACK
-        forceEnemyBattleAction(BattleAction.ATTACK);
+        enemyStubBattleAction(BattleAction.ATTACK);
 
-        Enemy enemy = battle.getEnemies().get(0);
-        enemy.setHealth(1);
+        enemyStub.setHealth(1);
         battleManager.performTurn(BattleAction.ATTACK);
 
         assertTrue(battle.getEnemies().isEmpty());
@@ -199,7 +179,7 @@ public class BattleManagerTests {
      */
     public void playerDefeat() {
         // stub battleAction() to ATTACK
-        forceEnemyBattleAction(BattleAction.ATTACK);
+        enemyStubBattleAction(BattleAction.ATTACK);
 
         Player player = battle.getPlayer();
         player.setHealth(1);
@@ -218,16 +198,15 @@ public class BattleManagerTests {
      */
     public void noPlayerAttackWhenPlayerDiesFirst() {
         // stub battleAction() to ATTACK
-        forceEnemyBattleAction(BattleAction.ATTACK);
+        enemyStubBattleAction(BattleAction.ATTACK);
 
-        Enemy enemy = battle.getEnemies().get(0);
         Player player = battle.getPlayer();
-        int enemyInitialHealth = enemy.getHealth();
+        int enemyInitialHealth = enemyStub.getHealth();
         battle.setPriority(1);
         player.setHealth(1);
         battleManager.performTurn(BattleAction.ATTACK);
 
-        assertEquals(enemyInitialHealth, enemy.getHealth());
+        assertEquals(enemyInitialHealth, enemyStub.getHealth());
     }
 
     @Test
@@ -239,13 +218,12 @@ public class BattleManagerTests {
      */
     public void noEnemyAttackWhenEnemyDiesFirst() {
         // stub battleAction() to ATTACK
-        forceEnemyBattleAction(BattleAction.ATTACK);
+        enemyStubBattleAction(BattleAction.ATTACK);
 
-        Enemy enemy = battle.getEnemies().get(0);
         Player player = battle.getPlayer();
         int playerInitialHealth = player.getHealth();
         battle.setPriority(0);
-        enemy.setHealth(1);
+        enemyStub.setHealth(1);
         battleManager.performTurn(BattleAction.ATTACK);
 
         assertEquals(playerInitialHealth, player.getHealth());
@@ -260,17 +238,14 @@ public class BattleManagerTests {
      */
     public void playerAttackEnemyDodgeSuccessful() {
         // stub battleAction() to DODGE
-        // stub dodge() to always succeed
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.battleAction()).thenReturn(BattleAction.DODGE);
-        when(enemy.attemptDodge()).thenReturn(true);
-        List<Enemy> enemies = new ArrayList<>(List.of(enemy));
-        battle.setEnemies(enemies);
+        enemyStubBattleAction(BattleAction.DODGE);
+        // stub Enemy dodge() to always succeed
+        enemyStubDodgeOutcome(true);
 
-        int startingEnemyHealth = battle.getEnemies().get(0).getHealth();
+        int startingEnemyHealth = enemyStub.getHealth();
         battleManager.performTurn(BattleAction.ATTACK);
 
-        assertEquals(startingEnemyHealth, battle.getEnemies().get(0).getHealth());
+        assertEquals(startingEnemyHealth, enemyStub.getHealth());
         assertEquals(1, battle.getPriority());
     }
 
@@ -283,18 +258,14 @@ public class BattleManagerTests {
      */
     public void playerAttackEnemyDodgeFailure() {
         // stub battleAction() to DODGE
-        // stub dodge() to always fail
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.battleAction()).thenReturn(BattleAction.DODGE);
-        when(enemy.attemptDodge()).thenReturn(false);
-        List<Enemy> enemies = new ArrayList<>(List.of(enemy));
-        battle.setEnemies(enemies);
+        enemyStubBattleAction(BattleAction.DODGE);
+        // stub Enemy dodge() to always fail
+        enemyStubDodgeOutcome(false);
 
-        int startingEnemyHealth = battle.getEnemies().get(0).getHealth();
+        int startingEnemyHealth = enemyStub.getHealth();
         battleManager.performTurn(BattleAction.ATTACK);
 
-//        verify(stubbedEnemy).dodge();
-        assertTrue(battle.getEnemies().get(0).getHealth() < startingEnemyHealth);
+        assertTrue(enemyStub.getHealth() < startingEnemyHealth);
         assertEquals(-1, battle.getPriority());
     }
 
@@ -306,15 +277,10 @@ public class BattleManagerTests {
     And player should gain attack priority
      */
     public void playerDodgeSuccessEnemyAttack() {
-        // stub battleAction() to ATTACK
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.battleAction()).thenReturn(BattleAction.ATTACK);
-        List<Enemy> enemies = new ArrayList<>(List.of(enemy));
-        battle.setEnemies(enemies);
-        // stub dodge() to always succeed
-        Player player = spy(battle.getPlayer());
-        when(player.attemptDodge()).thenReturn(true);
-        battle.setPlayer(player);
+        // stub Enemy to ATTACK
+        enemyStubBattleAction(BattleAction.ATTACK);
+        // stub Player dodge() to always succeed
+        forcePlayerDodgeOutcome(true);
 
         int startingPlayerHealth = battle.getPlayer().getHealth();
         battleManager.performTurn(BattleAction.DODGE);
@@ -331,20 +297,16 @@ public class BattleManagerTests {
     And priority should be neutral
      */
     public void playerDodgeFailureEnemyAttack() {
-        // stub battleAction() to ATTACK
-        Enemy enemy = spy(battle.getEnemies().get(0));
-        when(enemy.battleAction()).thenReturn(BattleAction.ATTACK);
-        List<Enemy> enemies = new ArrayList<>(List.of(enemy));
-        battle.setEnemies(enemies);
-        // stub dodge() to always fail
-        Player player = spy(battle.getPlayer());
-        when(player.attemptDodge()).thenReturn(false);
-        battle.setPlayer(player);
+        // stub Enemy to ATTACK
+        enemyStubBattleAction(BattleAction.ATTACK);
+        // stub Player dodge() to always fail
+        forcePlayerDodgeOutcome(false);
 
-        int startingPlayerHealth = battle.getPlayer().getHealth();
+        Player player = battle.getPlayer();
+        int startingPlayerHealth = player.getHealth();
         battleManager.performTurn(BattleAction.DODGE);
 
-        assertTrue(battle.getPlayer().getHealth() < startingPlayerHealth);
+        assertTrue(player.getHealth() < startingPlayerHealth);
         assertEquals(-1, battle.getPriority());
     }
 }
