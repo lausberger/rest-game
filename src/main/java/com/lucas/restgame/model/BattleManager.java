@@ -11,7 +11,6 @@ public class BattleManager {
     
     private final Battle battle;
 
-    // TODO change to factory/DI construction
     public BattleManager(Battle battle) {
         if (battle.getStatus() != BattleStatus.ONGOING) {
             throw new IllegalArgumentException("Battle has already concluded");
@@ -151,7 +150,6 @@ public class BattleManager {
 
     private void handleAttackDodge(Entity attacker, Entity dodger) {
         // roll for dodge
-//        boolean dodgeSuccess = coinFlip(0.5f); // replace with entity dodge chance
         boolean dodgeSuccess = dodger.attemptDodge();
         if (dodgeSuccess) {
             // update battle text
@@ -255,6 +253,98 @@ public class BattleManager {
         // applySpell(battle, caster2, caster1); // TODO: implement spells!
     }
 
+    private final Map<Set<BattleAction>, BMFunc> actionHandlers = Map.of(
+            // ATTACK ATTACK
+            Set.copyOf(List.of(BattleAction.ATTACK)),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (friendlyFirst) {
+                    handleAttackAttack((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleAttackAttack((Entity) enemy, (Entity) friendly);
+                }
+            },
+
+            // ATTACK DEFEND
+            Set.copyOf(List.of(BattleAction.ATTACK, BattleAction.DEFEND)),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.ATTACK) {
+                    handleAttackDefend((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleAttackDefend((Entity) enemy, (Entity) friendly);
+                }
+            },
+
+            // ATTACK DODGE
+            Set.copyOf(List.of(BattleAction.ATTACK, BattleAction.DODGE)),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.ATTACK) {
+                    handleAttackDodge((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleAttackDodge((Entity) enemy, (Entity) friendly);
+                }
+            },
+
+            // ATTACK SPELL
+            Set.copyOf(List.of(BattleAction.ATTACK, BattleAction.SPELL)),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.ATTACK) {
+                    handleAttackSpell((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleAttackSpell((Entity) enemy, (Entity) friendly);
+                }
+            },
+
+            // DEFEND DEFEND
+            Set.copyOf(List.of(BattleAction.DEFEND)),
+            (friendly, enemy, friendlyFirst, action) ->
+                    handleDefendDefend((Entity) friendly, (Entity) enemy),
+
+            // DEFEND DODGE
+            Set.copyOf(List.of(BattleAction.DEFEND, BattleAction.DODGE)),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.DEFEND) {
+                    handleDefendDodge((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleDefendDodge((Entity) enemy, (Entity) friendly);
+                }
+            },
+
+            // DEFEND SPELL
+            Set.copyOf(List.of(BattleAction.DEFEND, BattleAction.SPELL)),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.DEFEND) {
+                    handleDefendSpell((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleDefendSpell((Entity) enemy, (Entity) friendly);
+                }
+            },
+
+            // DODGE DODGE
+            Set.copyOf(List.of(BattleAction.DODGE)),
+            (friendly, enemy, friendlyFirst, a) ->
+                    handleDodgeDodge((Entity) friendly, (Entity) enemy),
+
+            // DODGE SPELL
+            Set.copyOf(List.of(BattleAction.DODGE, BattleAction.SPELL)),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (action == BattleAction.DODGE) {
+                    handleDodgeSpell((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleDodgeSpell((Entity) enemy, (Entity) friendly);
+                }
+            },
+
+            // SPELL SPELL
+            Set.copyOf(List.of(BattleAction.SPELL)),
+            (friendly, enemy, friendlyFirst, action) -> {
+                if (friendlyFirst) {
+                    handleSpellSpell((Entity) friendly, (Entity) enemy);
+                } else {
+                    handleSpellSpell((Entity) enemy, (Entity) friendly);
+                }
+            }
+    );
+
     public boolean coinFlip(float odds) {
         return Math.random() < odds;
     }
@@ -327,98 +417,6 @@ public class BattleManager {
 
         return battle;
     }
-
-    private final Map<Set<BattleAction>, BMFunc> actionHandlers = Map.of(
-            // ATTACK ATTACK
-            Set.copyOf(List.of(BattleAction.ATTACK)),
-            (friendly, enemy, friendlyFirst, action) -> {
-                if (friendlyFirst) {
-                    handleAttackAttack((Entity) friendly, (Entity) enemy);
-                } else {
-                    handleAttackAttack((Entity) enemy, (Entity) friendly);
-                }
-            },
-
-            // ATTACK DEFEND
-            Set.copyOf(List.of(BattleAction.ATTACK, BattleAction.DEFEND)),
-            (friendly, enemy, friendlyFirst, action) -> {
-                if (action == BattleAction.ATTACK) {
-                    handleAttackDefend((Entity) friendly, (Entity) enemy);
-                } else {
-                    handleAttackDefend((Entity) enemy, (Entity) friendly);
-                }
-            },
-
-            // ATTACK DODGE
-            Set.copyOf(List.of(BattleAction.ATTACK, BattleAction.DODGE)),
-            (friendly, enemy, friendlyFirst, action) -> {
-                if (action == BattleAction.ATTACK) {
-                    handleAttackDodge((Entity) friendly, (Entity) enemy);
-                } else {
-                    handleAttackDodge((Entity) enemy, (Entity) friendly);
-                }
-            },
-
-            // ATTACK SPELL
-            Set.copyOf(List.of(BattleAction.ATTACK, BattleAction.SPELL)),
-            (friendly, enemy, friendlyFirst, action) -> {
-                if (action == BattleAction.ATTACK) {
-                    handleAttackSpell((Entity) friendly, (Entity) enemy);
-                } else {
-                    handleAttackSpell((Entity) enemy, (Entity) friendly);
-                }
-            },
-
-            // DEFEND DEFEND
-            Set.copyOf(List.of(BattleAction.DEFEND)),
-            (friendly, enemy, friendlyFirst, action) ->
-                handleDefendDefend((Entity) friendly, (Entity) enemy),
-
-            // DEFEND DODGE
-            Set.copyOf(List.of(BattleAction.DEFEND, BattleAction.DODGE)),
-            (friendly, enemy, friendlyFirst, action) -> {
-                if (action == BattleAction.DEFEND) {
-                    handleDefendDodge((Entity) friendly, (Entity) enemy);
-                } else {
-                    handleDefendDodge((Entity) enemy, (Entity) friendly);
-                }
-            },
-
-            // DEFEND SPELL
-            Set.copyOf(List.of(BattleAction.DEFEND, BattleAction.SPELL)),
-            (friendly, enemy, friendlyFirst, action) -> {
-                if (action == BattleAction.DEFEND) {
-                    handleDefendSpell((Entity) friendly, (Entity) enemy);
-                } else {
-                    handleDefendSpell((Entity) enemy, (Entity) friendly);
-                }
-            },
-
-            // DODGE DODGE
-            Set.copyOf(List.of(BattleAction.DODGE)),
-            (friendly, enemy, friendlyFirst, a) ->
-                handleDodgeDodge((Entity) friendly, (Entity) enemy),
-
-            // DODGE SPELL
-            Set.copyOf(List.of(BattleAction.DODGE, BattleAction.SPELL)),
-            (friendly, enemy, friendlyFirst, action) -> {
-                if (action == BattleAction.DODGE) {
-                    handleDodgeSpell((Entity) friendly, (Entity) enemy);
-                } else {
-                    handleDodgeSpell((Entity) enemy, (Entity) friendly);
-                }
-            },
-
-            // SPELL SPELL
-            Set.copyOf(List.of(BattleAction.SPELL)),
-            (friendly, enemy, friendlyFirst, action) -> {
-                if (friendlyFirst) {
-                    handleSpellSpell((Entity) friendly, (Entity) enemy);
-                } else {
-                    handleSpellSpell((Entity) enemy, (Entity) friendly);
-                }
-            }
-    );
 
     @FunctionalInterface
     private interface BMFunc<Entity, BattleAction> {
