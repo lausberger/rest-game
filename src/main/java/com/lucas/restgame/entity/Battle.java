@@ -98,6 +98,11 @@ public class Battle {
         }
     }
 
+    @DynamoDBIgnore
+    public Enemy getEnemy(int index) {
+        return this.enemies.get(index);
+    }
+
     public void addEnemy(Enemy enemy) throws IllegalArgumentException {
         if (this.enemies.contains(enemy)) {
             throw new IllegalArgumentException("Enemy already exists here.");
