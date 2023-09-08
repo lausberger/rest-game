@@ -40,6 +40,22 @@ public class BattleManagerTests {
 
     @Test
     /*
+    Given a combatant has priority
+    When the next turn ends
+    And neither combatant gains priority
+    Then priority should reset to neutral
+     */
+    public void priorityResetsBetweenTurns() {
+        enemyStubBattleAction(BattleAction.ATTACK);
+
+        battle.setPriority(1);
+        battleManager.performTurn(BattleAction.ATTACK);
+
+        assertEquals(-1, battle.getPriority());
+    }
+
+    @Test
+    /*
     Given player uses ATTACK
     When enemy uses ATTACK
     Then both should lose health
@@ -154,12 +170,76 @@ public class BattleManagerTests {
 
     @Test
     /*
-    Given there is one enemy with low health
-    When player uses ATTACK
-    Then enemy should be deleted
+    Given both combatants attempt to dodge
+    When both succeed
+    Then priority should remain neutral
+     */
+    public void neutralPriorityWhenBothDodgeSuccess() {
+        enemyStubBattleAction(BattleAction.DODGE);
+        enemyStubDodgeOutcome(true);
+        forcePlayerDodgeOutcome(true);
+
+        battleManager.performTurn(BattleAction.DODGE);
+
+        assertEquals(-1, battle.getPriority());
+    }
+
+    @Test
+    /*
+    Given both combatants attempt to dodge
+    When both fail
+    Then priority should remain neutral
+     */
+    public void neutralPriorityWhenBothDodgeFailure() {
+        enemyStubBattleAction(BattleAction.DODGE);
+        enemyStubDodgeOutcome(false);
+        forcePlayerDodgeOutcome(false);
+
+        battleManager.performTurn(BattleAction.DODGE);
+
+        assertEquals(-1, battle.getPriority());
+    }
+
+    @Test
+    /*
+    Given both combatants DODGE
+    When only Player succeeds
+    Then Player should gain priority
+     */
+    public void priorityWhenPlayerDodgeSuccessEnemyDodgeFail() {
+        enemyStubBattleAction(BattleAction.DODGE);
+        enemyStubDodgeOutcome(false);
+        forcePlayerDodgeOutcome(true);
+
+        battleManager.performTurn(BattleAction.DODGE);
+
+        assertEquals(0, battle.getPriority());
+    }
+
+    @Test
+    /*
+    Given both combatants DODGE
+    When only Player succeeds
+    Then Player should gain priority
+     */
+    public void priorityWhenPlayerDodgeFailEnemyDodgeSucceed() {
+        enemyStubBattleAction(BattleAction.DODGE);
+        enemyStubDodgeOutcome(true);
+        forcePlayerDodgeOutcome(false);
+
+        battleManager.performTurn(BattleAction.DODGE);
+
+        assertEquals(1, battle.getPriority());
+    }
+
+    @Test
+    /*
+    Given there is a single enemy remaining
+    When player kills the enemy
+    Then the list of enemies should be empty
     And status should be VICTORY
      */
-    public void playerVictory() {
+    public void battleStatusWhenPlayerWins() {
         // stub battleAction() to ATTACK
         enemyStubBattleAction(BattleAction.ATTACK);
 
@@ -173,11 +253,11 @@ public class BattleManagerTests {
     @Test
     /*
     Given player has low health
-    When enemy uses ATTACK
+    When an enemy kills the player
     Then player should have 0 health
     And status should be DEFEAT
      */
-    public void playerDefeat() {
+    public void battleStatusWhenPlayerDies() {
         // stub battleAction() to ATTACK
         enemyStubBattleAction(BattleAction.ATTACK);
 
@@ -236,7 +316,7 @@ public class BattleManagerTests {
     Then enemy should take no damage
     And enemy should gain attack priority
      */
-    public void playerAttackEnemyDodgeSuccessful() {
+    public void playerAttackEnemyDodgeSuccess() {
         // stub battleAction() to DODGE
         enemyStubBattleAction(BattleAction.DODGE);
         // stub Enemy dodge() to always succeed
