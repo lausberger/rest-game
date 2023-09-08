@@ -136,7 +136,7 @@ public class BattleManager {
         // update battle text
         addBattleText(
                 String.format(
-                        "%s is poised to act.",
+                        "%s is now poised to act.",
                         recipient.getName()));
     }
 
