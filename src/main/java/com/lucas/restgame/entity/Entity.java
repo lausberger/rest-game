@@ -47,6 +47,11 @@ public class Entity {
         this.power = power;
     }
 
+    private float dodgeChance = 0.5f;
+    public boolean dodge() {
+        return Math.random() < dodgeChance;
+    }
+
     public void setDefense(int defense) {
         this.defense = defense;
     }

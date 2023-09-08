@@ -11,6 +11,7 @@ public class BattleManager {
     
     private final Battle battle;
 
+    // TODO change to factory/DI construction
     public BattleManager(Battle battle) {
         if (battle.getStatus() != BattleStatus.ONGOING) {
             throw new IllegalArgumentException("Battle has already concluded");
@@ -140,17 +141,18 @@ public class BattleManager {
                         recipient.getName()));
     }
 
-    // first entity will deal damage first
-    private void handleAttackAttack(Entity attacker1, Entity attacker2) {
+    // firstAttacker will deal damage first
+    private void handleAttackAttack(Entity firstAttacker, Entity secondAttacker) {
         // first attacker deals damage
-        applyAttackDamage(attacker1, attacker2);
+        applyAttackDamage(firstAttacker, secondAttacker);
         // second attacker deals damage
-        applyAttackDamage(attacker2, attacker1);
+        applyAttackDamage(secondAttacker, firstAttacker);
     }
 
     private void handleAttackDodge(Entity attacker, Entity dodger) {
         // roll for dodge
-        boolean dodgeSuccess = coinFlip(0.5f); // replace with entity dodge chance
+//        boolean dodgeSuccess = coinFlip(0.5f); // replace with entity dodge chance
+        boolean dodgeSuccess = dodger.dodge();
         if (dodgeSuccess) {
             // update battle text
             addBattleText(
