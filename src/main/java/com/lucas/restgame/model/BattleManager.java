@@ -220,8 +220,8 @@ public class BattleManager {
         // update battle text
         addBattleText("Both combatants attempt to reposition.");
         // roll for dodge for both
-        boolean dodge1Success = coinFlip(0.5f);
-        boolean dodge2Success = coinFlip(0.5f);
+        boolean dodge1Success = dodger1.attemptDodge();
+        boolean dodge2Success = dodger2.attemptDodge();
         // nothing happens if both succeed or both fail
         if (dodge1Success == dodge2Success) {
             addBattleText("Neither manages to gain the advantage.");
