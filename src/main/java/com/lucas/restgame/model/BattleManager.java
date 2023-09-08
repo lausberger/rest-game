@@ -197,7 +197,7 @@ public class BattleManager {
         // update battle text
         addBattleText(
                 String.format(
-                        "%s is unfazed by %s's movement.",
+                        "%s solidifies their position against %s's movements.",
                         defender.getName(),
                         dodger.getName()));
         // give priority to defender
@@ -238,7 +238,7 @@ public class BattleManager {
         // update battle text
         addBattleText(
                 String.format(
-                        "%s watches %s's movements closely.",
+                        "%s studies %s's movements closely.",
                         caster.getName(),
                         dodger.getName()));
         // apply spell on dodger
