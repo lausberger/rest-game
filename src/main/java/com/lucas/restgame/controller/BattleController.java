@@ -18,9 +18,6 @@ public class BattleController {
     @Autowired
     private BattleRepository battleRepository;
 
-    private final BattleManager battleManager = new BattleManager();
-
-
     // TODO this makes more sense as a PUT!
     /*
     it's totally non-RESTful, but battle lookup based on Player/auth token
@@ -28,7 +25,8 @@ public class BattleController {
      */
     @PostMapping("/battles/{id}")
     public Battle performBattleAction(
-            @PathVariable("id") String battleID, @RequestBody BattleRequest request) {
+            @PathVariable("id") String battleID,
+            @RequestBody BattleRequest request) {
         Battle battle = battleRepository.getBattleByID(battleID);
         if (battle == null) {
             throw new ResponseStatusException(
@@ -39,9 +37,10 @@ public class BattleController {
                     )
             );
         }
+        BattleManager battleManager = new BattleManager(battle);
         BattleAction action = request.getAction();
         int target = request.getTarget(); // unused for now
-        Battle updatedBattle = battleManager.simulateBattle(battle, action);
+        Battle updatedBattle = battleManager.performTurn(action);
         // should updateBattle return a Battle?
         battleRepository.updateBattle(battleID, updatedBattle);
         return updatedBattle;

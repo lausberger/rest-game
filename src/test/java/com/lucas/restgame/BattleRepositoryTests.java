@@ -41,7 +41,7 @@ public class BattleRepositoryTests {
     BattleRepository battleRepository;
 
     @Before
-    public void setup() throws Exception {
+    public void setup() {
         dynamoDBMapper = new DynamoDBMapper(amazonDynamoDB);
         CreateTableRequest tableRequest = dynamoDBMapper
                 .generateCreateTableRequest(Battle.class);
@@ -52,9 +52,8 @@ public class BattleRepositoryTests {
     }
 
     // TODO clear table after each test if conflicts arise
-
     @After
-    public void teardown() throws Exception {
+    public void teardown() {
         amazonDynamoDB.deleteTable(dynamoDBMapper
                 .generateDeleteTableRequest(Battle.class));
     }

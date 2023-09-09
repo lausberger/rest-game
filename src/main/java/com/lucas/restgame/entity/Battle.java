@@ -4,7 +4,9 @@ import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import com.lucas.restgame.model.BattleStatus;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @DynamoDBTable(tableName = "battles")
 public class Battle {
@@ -73,7 +75,12 @@ public class Battle {
 
     @DynamoDBAttribute
     public int getPriority() { return this.priority; }
-    public void setPriority(int priority) { this.priority = priority; }
+    public void setPriority(int priority) throws IllegalArgumentException {
+        if (priority > 1 || priority < -1) {
+            throw new IllegalArgumentException("Valid values: -1, 0, 1");
+        }
+        this.priority = priority;
+    }
 
     @DynamoDBAttribute
     public String getText() { return this.text; }
@@ -89,6 +96,36 @@ public class Battle {
         } else {
             this.text += "/n" + text;
         }
+    }
+
+    @DynamoDBIgnore
+    public Enemy getEnemy(int index) {
+        return this.enemies.get(index);
+    }
+
+    public void addEnemy(Enemy enemy) throws IllegalArgumentException {
+        if (this.enemies.contains(enemy)) {
+            throw new IllegalArgumentException("Enemy already exists here.");
+        }
+        this.enemies.add(enemy);
+    }
+
+    public void removeEnemy(Enemy enemy) throws NoSuchElementException {
+        boolean success = this.enemies.remove(enemy);
+        if (!success) {
+            throw new NoSuchElementException();
+        }
+    }
+
+    public void addEnemies(Enemy... enemies) {
+        for (Enemy e : enemies) {
+            addEnemy(e);
+        }
+    }
+
+    public void replaceEnemies(Enemy... enemies) {
+        List<Enemy> newEnemies = new ArrayList<>(List.of(enemies));
+        this.setEnemies(newEnemies);
     }
 
 }
