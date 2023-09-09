@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 @DynamoDBTable(tableName = "battles")
-public class Battle {
+public class Battle implements Interactable {
 
     private String battleID;
     private Player player;
