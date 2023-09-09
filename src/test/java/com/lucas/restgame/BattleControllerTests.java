@@ -43,13 +43,13 @@ public class BattleControllerTests {
 
     @Test
     /*
-    Given there is a Battle with ID "xyz" in the repo
-    When I send a POST to /battles/xyz with a BattleRequest in body
-    Then the response should contain Battle xyz
+    Given there is a Battle in the repo
+    When I send a POST to /battles/xyz
+    Then the response should contain said Battle
+    And response status should not be 404 Not Found
      */
     public void performBattleActionWithValidID() throws Exception {
         Battle battle = new Battle();
-        battle.setBattleID("xyz");
         BattleRequest request = new BattleRequest();
         request.setAction(BattleAction.ATTACK);
         request.setTarget(0);
@@ -59,10 +59,11 @@ public class BattleControllerTests {
         MvcResult response = mvc.perform(post("/battles/xyz")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
                 .andReturn();
         String responseString = response.getResponse().getContentAsString();
         Battle returnedBattle = objectMapper.readValue(responseString, Battle.class);
-        assertEquals("xyz", returnedBattle.getBattleID());
+        assertSame(battle.getBattleID(), returnedBattle.getBattleID());
     }
 
     @Test
