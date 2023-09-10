@@ -52,8 +52,7 @@ public class DungeonManagerTests {
     Given I am in the Room of a Dungeon Instance
     And I have yet to complete the Battle within it
     When I attempt to move to the next Room
-    Then I should receive 403 Forbidden
-    And I should remain in my current Room
+    Then I should remain in my current Room
      */
     public void playerCannotProgressBeforeWinningBattle() {
 
