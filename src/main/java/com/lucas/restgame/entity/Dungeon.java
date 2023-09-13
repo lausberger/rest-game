@@ -67,14 +67,22 @@ public class Dungeon {
                 dungeonInstance.getPlayerID(), dungeonInstance);
     }
 
-    public void removeDungeonInstance(String playerID)
+    public DungeonInstance getDungeonInstance(String playerID)
             throws NoSuchElementException {
-        DungeonInstance value =
-                this.dungeonInstances.remove(playerID);
-        if (value == null) {
+        DungeonInstance instance = dungeonInstances.get(playerID);
+        if (instance == null) {
             throw new NoSuchElementException(
                     "Dungeon instance for " + playerID + " does not exist.");
         }
+        return instance;
+    }
 
+    public void removeDungeonInstance(String playerID)
+            throws NoSuchElementException {
+        DungeonInstance instance = dungeonInstances.remove(playerID);
+        if (instance == null) {
+            throw new NoSuchElementException(
+                    "Dungeon instance for " + playerID + " does not exist.");
+        }
     }
 }
