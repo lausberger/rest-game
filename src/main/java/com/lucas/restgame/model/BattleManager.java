@@ -12,7 +12,8 @@ public class BattleManager {
     private final Battle battle;
 
     public BattleManager(Battle battle) {
-        if (battle.getStatus() != BattleStatus.ONGOING) {
+        if (battle.getStatus() == BattleStatus.VICTORY
+        || battle.getStatus() == BattleStatus.DEFEAT) {
             throw new IllegalArgumentException("Battle has already concluded");
         }
         this.battle = battle;
@@ -334,8 +335,11 @@ public class BattleManager {
     }
 
     public Battle performTurn(BattleAction playerAction) {
-        // do nothing if battle has already ended
-        if (getBattleStatus() != BattleStatus.ONGOING) {
+        // start Battle if needed
+        if (getBattleStatus() == BattleStatus.NOT_STARTED) {
+            setBattleStatus(BattleStatus.ONGOING);
+        } else if (getBattleStatus() != BattleStatus.ONGOING) {
+            // do nothing if battle has already ended
             return this.battle;
         }
 

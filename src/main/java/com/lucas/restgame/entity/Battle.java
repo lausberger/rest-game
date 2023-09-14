@@ -22,7 +22,7 @@ public class Battle implements Interactable {
         this.player = player;
         this.enemies = new ArrayList<>();
         this.enemies.add(enemy);
-        this.status = BattleStatus.ONGOING;
+        this.status = BattleStatus.NOT_STARTED;
         this.priority = -1;
         this.text = "";
     }
@@ -30,7 +30,7 @@ public class Battle implements Interactable {
     public Battle(Player player, List<Enemy> enemies) {
         this.player = player;
         this.enemies = enemies;
-        this.status = BattleStatus.ONGOING;
+        this.status = BattleStatus.NOT_STARTED;
         this.priority = -1;
         this.text = "";
     }
@@ -39,7 +39,7 @@ public class Battle implements Interactable {
         this.player = new Player();
         this.enemies = new ArrayList<>();
         this.enemies.add(new Enemy());
-        this.status = BattleStatus.ONGOING;
+        this.status = BattleStatus.NOT_STARTED;
         this.priority = -1;
         this.text = "";
     }
