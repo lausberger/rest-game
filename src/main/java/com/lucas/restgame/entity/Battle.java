@@ -49,6 +49,9 @@ public class Battle implements Interactable {
     public String getBattleID() {
         return battleID;
     }
+    public void setBattleID(String battleID) {
+        this.battleID = battleID;
+    }
 
     @DynamoDBAttribute
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.M)
